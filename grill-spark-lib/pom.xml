@@ -12,6 +12,7 @@
 
     <properties>
         <mvn.classpath.file>${pom.basedir}/target/classpath</mvn.classpath.file>
+        <sparkVervion>1.0.1</sparkVervion>
     </properties>
 
 

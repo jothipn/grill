@@ -49,6 +49,16 @@ public class GrillConfConstants {
   public static final boolean DEFAULT_GRILL_SERVER_RECOVER_ON_RESTART = true;
   public static final String GRILL_SESSION_TIMEOUT_SECONDS = "grill.server.session.timeout.seconds";
   public static final long GRILL_SESSION_TIMEOUT_SECONDS_DEFAULT = 1440 * 60; // Default is one day
+  public static final String GRILL_SERVER_UI_URI = "grill.server.ui.base.uri";
+  public static final String DEFAULT_GRILL_SERVER_UI_URI = "http://0.0.0.0:19999/";
+  public static final String GRILL_SERVER_UI_STATIC_DIR = "grill.server.ui.static.dir";
+  public static final String DEFAULT_GRILL_SERVER_UI_STATIC_DIR = "webapp/grill-server/static";
+  public static final String GRILL_SERVER_UI_ENABLE_CACHING = "grill.server.ui.enable.caching";
+  public static final boolean DEFAULT_GRILL_SERVER_UI_ENABLE_CACHING = true;
+
+  // These properties should be set in native tables if their underlying DB or table names are different
+  public static final String GRILL_NATIVE_DB_NAME = "grill.native.db.name";
+  public static final String GRILL_NATIVE_TABLE_NAME = "grill.native.table.name";
 
   public static String getServiceImplConfKey(String sName) {
     return GRILL_PFX + sName + GRILL_SERVICE_IMPL_SFX;
@@ -139,5 +149,7 @@ public class GrillConfConstants {
   public static final long DEFAULT_RESULT_SPLIT_MULTIPLE_MAX_ROWS = 100000;
 
   public static final String RESULT_FS_READ_URL = "grill.query.result.fs.read.url";
+
+  public static final String AUX_JARS = "grill.aux.jars";
 
 }

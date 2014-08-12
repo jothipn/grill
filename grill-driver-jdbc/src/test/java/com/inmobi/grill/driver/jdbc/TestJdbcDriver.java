@@ -28,14 +28,14 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hive.service.cli.ColumnDescriptor;
+import org.testng.Assert;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import com.inmobi.grill.api.GrillException;
 import com.inmobi.grill.api.query.QueryHandle;
-import com.inmobi.grill.api.query.ResultColumn;
-import com.inmobi.grill.api.query.ResultColumnType;
 import com.inmobi.grill.api.query.ResultRow;
 import com.inmobi.grill.server.api.driver.DriverQueryStatus.DriverQueryState;
 import com.inmobi.grill.server.api.driver.GrillResultSet;
@@ -112,7 +112,54 @@ public class TestJdbcDriver {
       }
     }
   }
-  
+
+  @Test
+  public void testDDLQueries() {
+    String query = "DROP TABLE TEMP";
+
+    Throwable th = null;
+    try {
+      driver.rewriteQuery(query, baseConf);
+    } catch (GrillException e) {
+      e.printStackTrace();
+      th = e;
+    }
+    Assert.assertNotNull(th);
+
+    query = "create table temp(name string, msr int)";
+
+    th = null;
+    try {
+      driver.rewriteQuery(query, baseConf);
+    } catch (GrillException e) {
+      e.printStackTrace();
+      th = e;
+    }
+    Assert.assertNotNull(th);
+
+    query = "insert overwrite table temp SELECT * FROM execute_test";
+
+    th = null;
+    try {
+      driver.rewriteQuery(query, baseConf);
+    } catch (GrillException e) {
+      e.printStackTrace();
+      th = e;
+    }
+    Assert.assertNotNull(th);
+
+    query = "create table temp2 as SELECT * FROM execute_test";
+
+    th = null;
+    try {
+      driver.rewriteQuery(query, baseConf);
+    } catch (GrillException e) {
+      e.printStackTrace();
+      th = e;
+    }
+    Assert.assertNotNull(th);
+  }
+
   @Test
   public void testExecute() throws Exception {
     createTable("execute_test");
@@ -131,8 +178,8 @@ public class TestJdbcDriver {
       GrillResultSetMetadata rsMeta = rs.getMetadata();
       assertEquals(rsMeta.getColumns().size(), 1);
       
-      ResultColumn col1 = rsMeta.getColumns().get(0);
-      assertEquals(col1.getType(), ResultColumnType.INT);
+      ColumnDescriptor col1 = rsMeta.getColumns().get(0);
+      assertEquals(col1.getTypeName().toLowerCase(), "int");
       assertEquals(col1.getName(), "ID");
       
       while (rs.hasNext()) {
@@ -215,8 +262,8 @@ public class TestJdbcDriver {
       GrillResultSetMetadata rsMeta = rs.getMetadata();
       assertEquals(rsMeta.getColumns().size(), 1);
       
-      ResultColumn col1 = rsMeta.getColumns().get(0);
-      assertEquals(col1.getType(), ResultColumnType.INT);
+      ColumnDescriptor col1 = rsMeta.getColumns().get(0);
+      assertEquals(col1.getTypeName().toLowerCase(), "int");
       assertEquals(col1.getName(), "ID");
       System.out.println("Matched metadata");
       
@@ -241,6 +288,37 @@ public class TestJdbcDriver {
     }
     
   }
+
+  @Test
+  public void testConnectionCloseForFailedQueries() throws Exception {
+    createTable("invalid_conn_close");
+    insertData("invalid_conn_close");
+
+    String query = "SELECT * from invalid_conn_close2";
+    QueryContext ctx = new QueryContext(query, "SA", baseConf);
+
+    for (int i = 0; i < JDBCDriverConfConstants.JDBC_POOL_MAX_SIZE_DEFAULT; i++) {
+      driver.executeAsync(ctx);
+      driver.updateStatus(ctx);
+      System.out.println("@@@@ QUERY " + (i+1));
+    }
+
+    String validQuery = "SELECT * FROM invalid_conn_close";
+    QueryContext validCtx = new QueryContext(validQuery, "SA", baseConf);
+    System.out.println("@@@ Submitting valid query");
+    driver.executeAsync(validCtx);
+
+    // Wait for query to finish
+    while (true) {
+      driver.updateStatus(validCtx);
+      if (validCtx.getDriverStatus().isFinished()) {
+        break;
+      }
+      Thread.sleep(1000);
+    }
+
+    driver.closeQuery(validCtx.getQueryHandle());
+  }
   
   @Test
   public void testCancelQuery() throws Exception {
@@ -258,7 +336,7 @@ public class TestJdbcDriver {
     assertTrue(context.getDriverStatus().getDriverFinishTime() > 0);
     driver.closeQuery(handle);
   }
-  
+
   @Test
   public void testInvalidQuery() throws Exception {
     String query = "SELECT * FROM invalid_table";

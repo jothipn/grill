@@ -32,7 +32,6 @@ import com.inmobi.grill.server.api.query.QuerySuccess;
 import com.inmobi.grill.server.api.query.QueuePositionChange;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.log4j.Logger;
-import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -100,11 +99,6 @@ public class TestEventService {
     service = GrillServices.get().getService(GrillEventService.NAME);
     assertNotNull(service);
     LOG.info("Service started " + service) ;
-  }
-
-  @AfterTest
-  public void cleanup() throws Exception {
-    service.stop();
   }
 
   @Test

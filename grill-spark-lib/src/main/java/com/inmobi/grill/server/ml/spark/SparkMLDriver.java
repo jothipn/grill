@@ -3,6 +3,7 @@ package com.inmobi.grill.server.ml.spark;
 import com.inmobi.grill.api.GrillException;
 import com.inmobi.grill.server.api.ml.MLDriver;
 import com.inmobi.grill.server.api.ml.MLTrainer;
+import com.inmobi.grill.server.ml.Algorithms;
 import com.inmobi.grill.server.ml.spark.trainers.BaseSparkTrainer;
 import com.inmobi.grill.server.ml.spark.trainers.LogisticRegressionTrainer;
 import com.inmobi.grill.server.ml.spark.trainers.NaiveBayesTrainer;
@@ -23,25 +24,25 @@ import java.util.Map;
 
 
 public class SparkMLDriver implements MLDriver {
-  private boolean isStarted;
-
   public static final Log LOG = LogFactory.getLog(SparkMLDriver.class);
 
-  private static final Map<String, Class<? extends BaseSparkTrainer>> trainerClasses =
-    new HashMap<String, Class<? extends BaseSparkTrainer>>();
-
-  static {
-    trainerClasses.put(LogisticRegressionTrainer.NAME, LogisticRegressionTrainer.class);
-    trainerClasses.put(NaiveBayesTrainer.NAME, NaiveBayesTrainer.class);
-    trainerClasses.put(SVMTrainer.NAME, SVMTrainer.class);
+  public enum SparkClientMode {
+    // Embedded mode used in tests
+    EMBEDDED,
+    // Yarn client and Yarn cluster modes are used when deploying the app to Yarn cluster
+    YARN_CLIENT,
+    YARN_CLUSTER
   }
 
+  private final Algorithms algorithms = new Algorithms();
+  private SparkClientMode clientMode = SparkClientMode.EMBEDDED;
+  private boolean isStarted;
   private SparkConf sparkConf;
   private JavaSparkContext sparkContext;
 
   @Override
   public boolean isTrainerSupported(String name) {
-    return trainerClasses.containsKey(name);
+    return algorithms.isAlgoSupported(name);
   }
 
   @Override
@@ -52,14 +53,14 @@ public class SparkMLDriver implements MLDriver {
       return null;
     }
 
-    BaseSparkTrainer trainer = null;
+    MLTrainer trainer = null;
     try {
-      trainer = trainerClasses.get(name).newInstance();
-      trainer.setSparkContext(sparkContext);
-    } catch (InstantiationException e) {
-      LOG.error("Error creating trainer object", e);
-    } catch (IllegalAccessException e) {
-      LOG.error("Error creating trainer object", e);
+      trainer = algorithms.getTrainerForName(name);
+      if (trainer instanceof BaseSparkTrainer) {
+        ((BaseSparkTrainer) trainer).setSparkContext(sparkContext);
+      }
+    } catch (GrillException exc) {
+      LOG.error("Error creating trainer object", exc);
     }
     return trainer;
   }
@@ -67,6 +68,9 @@ public class SparkMLDriver implements MLDriver {
   @Override
   public void init(Configuration conf) throws GrillException {
     sparkConf = new SparkConf();
+    algorithms.register(NaiveBayesTrainer.class);
+    algorithms.register(SVMTrainer.class);
+    algorithms.register(LogisticRegressionTrainer.class);
 
     Map<String, String> sparkDriverConf = conf.getValByRegex("grill\\.ml\\.sparkdriver\\..*");
     for (String key : sparkDriverConf.keySet()) {
@@ -82,6 +86,16 @@ public class SparkMLDriver implements MLDriver {
     if (StringUtils.isBlank(sparkConf.get("spark.home"))) {
       throw new GrillException("Spark home is not set");
     }
+
+    String sparkAppMaster = sparkConf.get("spark.master");
+    if ("yarn-client".equalsIgnoreCase(sparkAppMaster)) {
+      clientMode = SparkClientMode.YARN_CLIENT;
+    } else if ("yarn-cluster".equalsIgnoreCase(sparkAppMaster)) {
+      clientMode = SparkClientMode.YARN_CLUSTER;
+    } else if ("local".equalsIgnoreCase(sparkAppMaster) || StringUtils.isBlank(sparkAppMaster)) {
+      clientMode = SparkClientMode.EMBEDDED;
+    }
+
     LOG.info("Spark home is set to " + sparkConf.get("spark.home"));
   }
 
@@ -89,45 +103,47 @@ public class SparkMLDriver implements MLDriver {
   public void start() throws GrillException {
     sparkContext = new JavaSparkContext(sparkConf);
 
-    // Add hcatalog and hive jars
-    String hiveLocation = System.getenv("HIVE_HOME");
+    // Adding jars to spark context is only required when running in yarn-client mode
+    if (clientMode != SparkClientMode.EMBEDDED) {
+      // Add hcatalog and hive jars
+      String hiveLocation = System.getenv("HIVE_HOME");
 
-    if (StringUtils.isBlank(hiveLocation)) {
-      throw new GrillException("HIVE_HOME is not set");
-    }
-
-    LOG.info("HIVE_HOME at " + hiveLocation);
-
-    File hiveLibDir = new File(hiveLocation, "lib");
-    FilenameFilter jarFileFilter = new FilenameFilter() {
-      @Override
-      public boolean accept(File file, String s) {
-        return s.endsWith(".jar");
+      if (StringUtils.isBlank(hiveLocation)) {
+        throw new GrillException("HIVE_HOME is not set");
       }
-    };
 
-    List<String> jarFiles = new ArrayList<String>();
+      LOG.info("HIVE_HOME at " + hiveLocation);
 
-    // Add hive jars
-    for (File jarFile : hiveLibDir.listFiles(jarFileFilter)) {
-      jarFiles.add(jarFile.getAbsolutePath());
-      LOG.info("Adding HIVE jar " + jarFile.getAbsolutePath());
-      sparkContext.addJar(jarFile.getAbsolutePath());
-    }
+      File hiveLibDir = new File(hiveLocation, "lib");
+      FilenameFilter jarFileFilter = new FilenameFilter() {
+        @Override
+        public boolean accept(File file, String s) {
+          return s.endsWith(".jar");
+        }
+      };
 
-    // Add hcatalog jars
-    File hcatalogDir = new File(hiveLocation + "/hcatalog/share/hcatalog");
-    for (File jarFile : hcatalogDir.listFiles(jarFileFilter)) {
-      jarFiles.add(jarFile.getAbsolutePath());
-      LOG.info("Adding HCATALOG jar " + jarFile.getAbsolutePath());
-      sparkContext.addJar(jarFile.getAbsolutePath());
-    }
+      List<String> jarFiles = new ArrayList<String>();
+      // Add hive jars
+      for (File jarFile : hiveLibDir.listFiles(jarFileFilter)) {
+        jarFiles.add(jarFile.getAbsolutePath());
+        LOG.info("Adding HIVE jar " + jarFile.getAbsolutePath());
+        sparkContext.addJar(jarFile.getAbsolutePath());
+      }
 
-    // Add the current jar
-    String[] grillSparkLibJars = JavaSparkContext.jarOfClass(SparkMLDriver.class);
-    for (String grillSparkJar : grillSparkLibJars) {
-      LOG.info("Adding GRILL JAR " + grillSparkJar);
-      sparkContext.addJar(grillSparkJar);
+      // Add hcatalog jars
+      File hcatalogDir = new File(hiveLocation + "/hcatalog/share/hcatalog");
+      for (File jarFile : hcatalogDir.listFiles(jarFileFilter)) {
+        jarFiles.add(jarFile.getAbsolutePath());
+        LOG.info("Adding HCATALOG jar " + jarFile.getAbsolutePath());
+        sparkContext.addJar(jarFile.getAbsolutePath());
+      }
+
+      // Add the current jar
+      String[] grillSparkLibJars = JavaSparkContext.jarOfClass(SparkMLDriver.class);
+      for (String grillSparkJar : grillSparkLibJars) {
+        LOG.info("Adding GRILL JAR " + grillSparkJar);
+        sparkContext.addJar(grillSparkJar);
+      }
     }
 
     isStarted = true;
@@ -148,10 +164,10 @@ public class SparkMLDriver implements MLDriver {
 
   @Override
   public List<String> getTrainerNames() {
-    return new ArrayList<String>(trainerClasses.keySet());
+    return algorithms.getAlgorithmNames();
   }
 
-  public void checkStarted() throws GrillException{
+  public void checkStarted() throws GrillException {
     if (!isStarted) {
       throw new GrillException("Spark driver is not started yet");
     }

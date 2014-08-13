@@ -55,17 +55,17 @@ public class TestMLService {
     assertNotNull(trainers);
     assertEquals(trainers.size(), 3);
     assertEquals(new HashSet<String>(trainers),
-      new HashSet<String>(Arrays.asList(SVMTrainer.NAME, NaiveBayesTrainer.NAME, LogisticRegressionTrainer.NAME)));
+      new HashSet<String>(Arrays.asList("spark_svm", "spark_naive_bayes", "spark_logistic_regression")));
 
-    MLTrainer trainer = service.getTrainerForName(SVMTrainer.NAME);
+    MLTrainer trainer = service.getTrainerForName("spark_svm");
     assertNotNull(trainer);
     assertTrue(trainer instanceof SVMTrainer);
 
-    MLTrainer trainer2 = service.getTrainerForName(NaiveBayesTrainer.NAME);
+    MLTrainer trainer2 = service.getTrainerForName("spark_naive_bayes");
     assertNotNull(trainer2);
     assertTrue(trainer2 instanceof NaiveBayesTrainer);
 
-    MLTrainer trainer3 = service.getTrainerForName(LogisticRegressionTrainer.NAME);
+    MLTrainer trainer3 = service.getTrainerForName("spark_logistic_regression");
     assertNotNull(trainer3);
     assertTrue(trainer3 instanceof LogisticRegressionTrainer);
 

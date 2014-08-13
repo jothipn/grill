@@ -1,6 +1,7 @@
 package com.inmobi.grill.server.ml.spark.trainers;
 
 import com.inmobi.grill.api.GrillException;
+import com.inmobi.grill.server.api.ml.Algorithm;
 import com.inmobi.grill.server.ml.spark.models.BaseSparkClassificationModel;
 import com.inmobi.grill.server.ml.spark.models.SVMClassificationModel;
 import org.apache.spark.mllib.classification.SVMModel;
@@ -10,14 +11,19 @@ import org.apache.spark.rdd.RDD;
 
 import java.util.Map;
 
+@Algorithm(
+  name = "spark_svm",
+  description = "Spark SVML classifier trainer"
+)
 public class SVMTrainer extends BaseSparkTrainer {
-  public static final String NAME = "spark_svm";
-  public static final String DESCRIPTION = "Spark SVM classifier trainer";
   private double minBatchFraction;
   private double regParam;
   private double stepSize;
   private int iterations;
 
+  public SVMTrainer(String name, String description) {
+    super(name, description);
+  }
 
   @Override
   public void parseTrainerParams(Map<String, String> params) {
@@ -31,15 +37,5 @@ public class SVMTrainer extends BaseSparkTrainer {
   protected BaseSparkClassificationModel trainInternal(String modelId, RDD<LabeledPoint> trainingRDD) throws GrillException {
     SVMModel svmModel = SVMWithSGD.train(trainingRDD, iterations, stepSize, regParam, minBatchFraction);
     return new SVMClassificationModel(modelId, svmModel);
-  }
-
-  @Override
-  public String getName() {
-    return NAME;
-  }
-
-  @Override
-  public String getDescription() {
-    return DESCRIPTION;
   }
 }

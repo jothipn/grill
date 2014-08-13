@@ -143,14 +143,14 @@ public class TestMLResource extends GrillJerseyTest {
     assertNotNull(trainers);
     assertEquals(trainers.getElements().size(), 3);
     assertEquals(new HashSet<String>(trainers.getElements()),
-      new HashSet<String>(Arrays.asList(NaiveBayesTrainer.NAME,
-        SVMTrainer.NAME,
-        LogisticRegressionTrainer.NAME)));
+      new HashSet<String>(Arrays.asList("spark_naive_bayes",
+        "spark_svm",
+        "spark_logistic_regression")));
   }
 
   @Test
   public void testTrain() throws Exception {
-    final String algo = NaiveBayesTrainer.NAME;
+    final String algo = "spark_naive_bayes";
     WebTarget target = target("ml").path(algo).path("train");
     Form params = new Form();
     params.param("table", "ml_resource_test");

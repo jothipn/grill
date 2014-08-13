@@ -19,6 +19,9 @@ import java.util.*;
 public abstract class BaseSparkTrainer implements MLTrainer {
   public static final Log LOG = LogFactory.getLog(BaseSparkTrainer.class);
 
+  private final String name;
+  private final String description;
+
   protected JavaSparkContext sparkContext;
   protected Map<String, String> params;
   protected transient HiveConf conf;
@@ -28,6 +31,10 @@ public abstract class BaseSparkTrainer implements MLTrainer {
   protected String partitionFilter;
   protected List<String> features;
 
+  public BaseSparkTrainer(String name, String description) {
+    this.name = name;
+    this.description = description;
+  }
   public void setSparkContext(JavaSparkContext sparkContext) {
     this.sparkContext = sparkContext;
   }
@@ -135,6 +142,14 @@ public abstract class BaseSparkTrainer implements MLTrainer {
       }
     }
     return defaultVal;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public String getDescription() {
+    return description;
   }
 
   public abstract void parseTrainerParams(Map<String, String> params);

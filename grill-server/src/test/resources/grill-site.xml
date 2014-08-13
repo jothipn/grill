@@ -94,4 +94,9 @@
     </property>
 
 
+    <property>
+        <name>grill.ml.service.impl</name>
+        <value>com.inmobi.grill.server.ml.MLServiceImpl</value>
+        <description>ML service implementation</description>
+    </property>
 </configuration>

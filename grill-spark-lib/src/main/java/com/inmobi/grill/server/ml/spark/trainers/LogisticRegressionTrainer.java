@@ -1,6 +1,7 @@
 package com.inmobi.grill.server.ml.spark.trainers;
 
 import com.inmobi.grill.api.GrillException;
+import com.inmobi.grill.server.api.ml.Algorithm;
 import com.inmobi.grill.server.ml.spark.models.BaseSparkClassificationModel;
 import com.inmobi.grill.server.ml.spark.models.LogitRegressionClassificationModel;
 import org.apache.spark.mllib.classification.LogisticRegressionModel;
@@ -10,13 +11,16 @@ import org.apache.spark.rdd.RDD;
 
 import java.util.Map;
 
+@Algorithm(name = "spark_logistic_regression",
+  description = "Spark logistic regression trainer")
 public class LogisticRegressionTrainer extends BaseSparkTrainer {
-  public static final String NAME = "spark_logistic_regression";
-  public static final String DESCRIPTION = "Spark logistic regression trainer";
   private int iterations;
   private double stepSize;
   private double minBatchFraction;
 
+  public LogisticRegressionTrainer(String name, String description) {
+    super(name, description);
+  }
 
   @Override
   public void parseTrainerParams(Map<String, String> params) {
@@ -30,15 +34,5 @@ public class LogisticRegressionTrainer extends BaseSparkTrainer {
     LogisticRegressionModel lrModel =
       LogisticRegressionWithSGD.train(trainingRDD, iterations, stepSize, minBatchFraction);
     return new LogitRegressionClassificationModel(modelId, lrModel);
-  }
-
-  @Override
-  public String getName() {
-    return NAME;
-  }
-
-  @Override
-  public String getDescription() {
-    return DESCRIPTION;
   }
 }

@@ -4,10 +4,7 @@ import com.inmobi.grill.api.GrillException;
 import com.inmobi.grill.server.api.ml.MLDriver;
 import com.inmobi.grill.server.api.ml.MLTrainer;
 import com.inmobi.grill.server.ml.Algorithms;
-import com.inmobi.grill.server.ml.spark.trainers.BaseSparkTrainer;
-import com.inmobi.grill.server.ml.spark.trainers.LogisticRegressionTrainer;
-import com.inmobi.grill.server.ml.spark.trainers.NaiveBayesTrainer;
-import com.inmobi.grill.server.ml.spark.trainers.SVMTrainer;
+import com.inmobi.grill.server.ml.spark.trainers.*;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -65,12 +62,17 @@ public class SparkMLDriver implements MLDriver {
     return trainer;
   }
 
-  @Override
-  public void init(Configuration conf) throws GrillException {
-    sparkConf = new SparkConf();
+  private void registerTrainers() {
     algorithms.register(NaiveBayesTrainer.class);
     algorithms.register(SVMTrainer.class);
     algorithms.register(LogisticRegressionTrainer.class);
+    algorithms.register(DecisionTreeTrainer.class);
+  }
+
+  @Override
+  public void init(Configuration conf) throws GrillException {
+    sparkConf = new SparkConf();
+    registerTrainers();
 
     Map<String, String> sparkDriverConf = conf.getValByRegex("grill\\.ml\\.sparkdriver\\..*");
     for (String key : sparkDriverConf.keySet()) {
@@ -105,6 +107,7 @@ public class SparkMLDriver implements MLDriver {
 
     // Adding jars to spark context is only required when running in yarn-client mode
     if (clientMode != SparkClientMode.EMBEDDED) {
+      // TODO Figure out only necessary set of JARs to be added for HCatalog
       // Add hcatalog and hive jars
       String hiveLocation = System.getenv("HIVE_HOME");
 

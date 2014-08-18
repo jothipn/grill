@@ -10,8 +10,10 @@ import org.apache.spark.rdd.RDD;
 
 import java.util.Map;
 
-@Algorithm(name = "spark_naive_bayes",
-description = "Spark Naive Bayes classifier trainer")
+@Algorithm(
+  name = "spark_naive_bayes",
+  description = "Spark Naive Bayes classifier trainer"
+)
 public class NaiveBayesTrainer extends BaseSparkTrainer {
   private double lambda = 1.0;
 

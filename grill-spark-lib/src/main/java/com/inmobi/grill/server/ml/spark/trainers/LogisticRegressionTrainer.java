@@ -11,8 +11,10 @@ import org.apache.spark.rdd.RDD;
 
 import java.util.Map;
 
-@Algorithm(name = "spark_logistic_regression",
-  description = "Spark logistic regression trainer")
+@Algorithm(
+  name = "spark_logistic_regression",
+  description = "Spark logistic regression trainer"
+)
 public class LogisticRegressionTrainer extends BaseSparkTrainer {
   private int iterations;
   private double stepSize;

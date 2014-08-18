@@ -1,10 +1,10 @@
 package com.inmobi.grill.server.ml.spark.models;
 
-import com.inmobi.grill.server.ml.BaseModel;
+import com.inmobi.grill.server.ml.ClassifierBaseModel;
 import org.apache.spark.mllib.classification.ClassificationModel;
 import org.apache.spark.mllib.linalg.Vectors;
 
-public class BaseSparkClassificationModel<MODEL extends ClassificationModel> extends BaseModel {
+public class BaseSparkClassificationModel<MODEL extends ClassificationModel> extends ClassifierBaseModel {
   private final String modelId;
   private final MODEL sparkModel;
 
@@ -14,7 +14,7 @@ public class BaseSparkClassificationModel<MODEL extends ClassificationModel> ext
   }
 
   @Override
-  public double predict(Object... args) {
+  public Double predict(Object... args) {
     return sparkModel.predict(Vectors.dense(getFeatureVector(args)));
   }
 

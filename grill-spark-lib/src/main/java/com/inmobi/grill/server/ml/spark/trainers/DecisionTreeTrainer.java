@@ -1,6 +1,7 @@
 package com.inmobi.grill.server.ml.spark.trainers;
 
 import com.inmobi.grill.api.GrillException;
+import com.inmobi.grill.server.api.ml.Algorithm;
 import com.inmobi.grill.server.ml.spark.models.BaseSparkClassificationModel;
 import com.inmobi.grill.server.ml.spark.models.DecisionTreeClassificationModel;
 import com.inmobi.grill.server.ml.spark.models.SparkDecisionTreeModel;
@@ -17,6 +18,10 @@ import scala.Enumeration;
 
 import java.util.Map;
 
+@Algorithm(
+  name = "spark_decision_tree",
+  description = "Spark Decision Tree classifier trainer"
+)
 public class DecisionTreeTrainer extends BaseSparkTrainer {
   private Enumeration.Value algo;
   private Impurity decisionTreeImpurity;

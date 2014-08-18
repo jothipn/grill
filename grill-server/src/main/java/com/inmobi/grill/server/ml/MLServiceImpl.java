@@ -81,10 +81,8 @@ public class MLServiceImpl extends GrillService implements MLService {
 
     LOG.info("Done training model: " + modelId);
 
-    if (model instanceof BaseModel) {
-      ((BaseModel) model).setCreatedAt(new Date());
-      ((BaseModel) model).setTrainerName(algorithm);
-    }
+    model.setCreatedAt(new Date());
+    model.setTrainerName(algorithm);
 
     Path modelLocation = null;
     try {
@@ -387,7 +385,7 @@ public class MLServiceImpl extends GrillService implements MLService {
   }
 
   @Override
-  public Prediction predict(String algorithm, String modelID, Object[] features) throws GrillException {
+  public LabelledPrediction predict(String algorithm, String modelID, Object[] features) throws GrillException {
     return null;
   }
 

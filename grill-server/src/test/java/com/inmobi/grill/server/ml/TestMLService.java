@@ -86,5 +86,4 @@ public class TestMLService {
     assertEquals(service.getServiceState(), Service.STATE.STOPPED);
     LOG.info("@@ MLService test done");
   }
-
 }

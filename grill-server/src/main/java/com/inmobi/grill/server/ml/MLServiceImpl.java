@@ -295,6 +295,7 @@ public class MLServiceImpl extends GrillService implements MLService {
 
     GrillConf queryConf = new GrillConf();
     queryConf.addProperty(GrillConfConstants.GRILL_PERSISTENT_RESULT_SET, false + "");
+    queryConf.addProperty(GrillConfConstants.QUERY_PERSISTENT_RESULT_INDRIVER, false + "");
 
     QueryHandle testQueryHandle = queryService.executeAsync(sessionHandle,
       testQuery,

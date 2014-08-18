@@ -9,9 +9,6 @@ import com.inmobi.grill.server.GrillServices;
 import com.inmobi.grill.server.api.ml.MLModel;
 import com.inmobi.grill.server.api.ml.MLService;
 import com.inmobi.grill.server.api.ml.MLTestReport;
-import com.inmobi.grill.server.ml.spark.trainers.LogisticRegressionTrainer;
-import com.inmobi.grill.server.ml.spark.trainers.NaiveBayesTrainer;
-import com.inmobi.grill.server.ml.spark.trainers.SVMTrainer;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -141,11 +138,12 @@ public class TestMLResource extends GrillJerseyTest {
     WebTarget target = target("ml").path("trainers");
     StringList trainers = target.request().get(StringList.class);
     assertNotNull(trainers);
-    assertEquals(trainers.getElements().size(), 3);
+    assertEquals(trainers.getElements().size(), 4);
     assertEquals(new HashSet<String>(trainers.getElements()),
       new HashSet<String>(Arrays.asList("spark_naive_bayes",
         "spark_svm",
-        "spark_logistic_regression")));
+        "spark_logistic_regression",
+        "spark_decision_tree")));
   }
 
   @Test
@@ -171,6 +169,14 @@ public class TestMLResource extends GrillJerseyTest {
     assertNotNull(model);
     assertEquals(model.getId(), modelID);
     assertEquals(model.getTable(), "ml_resource_test");
+
+    // Validate predict call
+    WebTarget singlePredictCall = target("ml").path("predict").path(model.getTrainerName()).path(model.getId());
+    singlePredictCall.queryParam("feature_1", 1.0).queryParam("feature_2", 1.0).queryParam("feature_3", 1.0);
+    String result = singlePredictCall.request().get(String.class);
+    assertNotNull(result);
+    assertTrue(StringUtils.isNotBlank(result));
+    System.out.println("@@@ PREDICTION " + result);
 
     // Test the model using a UDF
     hiveClient.executeStatement(session, "INSERT OVERWRITE LOCAL DIRECTORY 'target/test_rest_call_model' " +

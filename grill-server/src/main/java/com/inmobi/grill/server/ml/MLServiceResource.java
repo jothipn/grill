@@ -9,15 +9,14 @@ import com.inmobi.grill.server.GrillServices;
 import com.inmobi.grill.server.api.ml.MLModel;
 import com.inmobi.grill.server.api.ml.MLService;
 import com.inmobi.grill.server.api.ml.MLTestReport;
+import org.apache.commons.collections.map.MultiValueMap;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
+import javax.ws.rs.core.*;
 import java.util.*;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
@@ -278,5 +277,28 @@ public class MLServiceResource {
                                   @PathParam("reportID") String reportID) throws GrillException {
     getMlService().deleteTestReport(algorithm, reportID);
     return "DELETED report="+ reportID +  " algorithm=" + algorithm;
+  }
+
+  @GET
+  @Path("/predict/{algorithm}/{modelID}")
+  @Produces({MediaType.APPLICATION_ATOM_XML, MediaType.APPLICATION_JSON})
+  public String predict(@PathParam("algorithm") String algorithm,
+    @PathParam("modelID") String modelID,
+    @Context UriInfo uriInfo) throws GrillException {
+    // Load the model instance
+    MLModel<?> model = getMlService().getModel(algorithm, modelID);
+
+    // Get input feature names
+    MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
+    String[] features = new String[model.getFeatureColumns().size()];
+    // Assuming that feature name parameters are same
+    int i = 0;
+    for (String feature : model.getFeatureColumns()) {
+      features[i++] = params.getFirst(feature);
+    }
+
+    Object prediction = model.predict(features);
+    // TODO needs a 'prediction formatter'
+    return prediction.toString();
   }
 }

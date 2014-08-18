@@ -11,7 +11,7 @@ public class ForecastingModel extends MLModel<MultiPrediction> {
 
   @Override
   public MultiPrediction predict(Object... args) {
-    return null;
+    return new ForecastingPredictions(null);
   }
 
   public static class ForecastingPredictions implements MultiPrediction {

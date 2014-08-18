@@ -5,6 +5,7 @@ import com.inmobi.grill.server.api.ml.MLDriver;
 import com.inmobi.grill.server.api.ml.MLService;
 import com.inmobi.grill.server.api.ml.MLTrainer;
 import com.inmobi.grill.server.ml.spark.SparkMLDriver;
+import com.inmobi.grill.server.ml.spark.trainers.DecisionTreeTrainer;
 import com.inmobi.grill.server.ml.spark.trainers.LogisticRegressionTrainer;
 import com.inmobi.grill.server.ml.spark.trainers.NaiveBayesTrainer;
 import com.inmobi.grill.server.ml.spark.trainers.SVMTrainer;
@@ -53,9 +54,10 @@ public class TestMLService {
 
     List<String> trainers = service.getAlgorithms();
     assertNotNull(trainers);
-    assertEquals(trainers.size(), 3);
+    assertEquals(trainers.size(), 4);
     assertEquals(new HashSet<String>(trainers),
-      new HashSet<String>(Arrays.asList("spark_svm", "spark_naive_bayes", "spark_logistic_regression")));
+      new HashSet<String>(Arrays.asList("spark_svm", "spark_naive_bayes", "spark_logistic_regression"
+      , "spark_decision_tree")));
 
     MLTrainer trainer = service.getTrainerForName("spark_svm");
     assertNotNull(trainer);
@@ -68,6 +70,10 @@ public class TestMLService {
     MLTrainer trainer3 = service.getTrainerForName("spark_logistic_regression");
     assertNotNull(trainer3);
     assertTrue(trainer3 instanceof LogisticRegressionTrainer);
+
+    MLTrainer trainer4 = service.getTrainerForName("spark_decision_tree");
+    assertNotNull(trainer4);
+    assertTrue(trainer4 instanceof DecisionTreeTrainer);
 
     service.stop();
     try {

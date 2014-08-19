@@ -143,6 +143,9 @@ public class GrillConnectionParams {
     return this.conf.getMetastoreResourcePath();
   }
 
+  public String getMLResourcePath() {
+    return this.conf.getMLResourcePath();
+  }
   public long getQueryPollInterval() {
     return this.conf.getQueryPollInterval();
   }

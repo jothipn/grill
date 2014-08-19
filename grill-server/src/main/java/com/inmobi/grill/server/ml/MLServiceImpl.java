@@ -190,7 +190,7 @@ public class MLServiceImpl extends GrillService implements MLService {
         drivers.add(driver);
         LOG.info("Added driver " + driverClass);
       } catch (Exception e) {
-        LOG.error("Failied to create driver " + driverClass + " reason: " + e.getMessage() , e);
+        LOG.error("Failed to create driver " + driverClass + " reason: " + e.getMessage() , e);
       }
     }
     super.init(hiveConf);
@@ -322,7 +322,7 @@ public class MLServiceImpl extends GrillService implements MLService {
       + " reason= " + query.getStatus().getErrorMessage());
     }
 
-    BaseTestReport testReport = new BaseTestReport();
+    MLTestReport testReport = new MLTestReport();
     testReport.setReportID(testID);
     testReport.setAlgorithm(algorithm);
     testReport.setFeatureColumns(model.getFeatureColumns());
@@ -339,7 +339,7 @@ public class MLServiceImpl extends GrillService implements MLService {
     return testReport;
   }
 
-  private void persistTestReport(BaseTestReport testReport) throws GrillException {
+  private void persistTestReport(MLTestReport testReport) throws GrillException {
     LOG.info("saving test report " + testReport.getReportID());
     try {
       ModelLoader.saveTestReport(conf, testReport);
@@ -351,7 +351,8 @@ public class MLServiceImpl extends GrillService implements MLService {
 
   @Override
   public List<String> getTestReports(String algorithm) throws GrillException {
-    Path reportBaseDir = new Path(conf.get(ModelLoader.TEST_REPORT_BASE_DIR, ModelLoader.TEST_REPORT_BASE_DIR_DEFAULT));
+    Path reportBaseDir = new Path(conf.get(ModelLoader.TEST_REPORT_BASE_DIR,
+      ModelLoader.TEST_REPORT_BASE_DIR_DEFAULT));
     FileSystem fs = null;
 
     try {

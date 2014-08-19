@@ -54,7 +54,8 @@ public class GrillClientConfig extends Configuration {
   public static final String DEFAULT_USER_NAME = "anonymous";
   private static final String GRILL_USER_PASS = "grill.user.password";
   public static final String DEFAULT_USER_PASS = "";
-
+  public static final String GRILL_ML_RESOURCE_PATH = "grill.ml.resource.path";
+  public static final String DEFAULT_ML_RESOURCE_PATH = "ml";
 
   /** 
    * Get the username from config
@@ -159,5 +160,9 @@ public class GrillClientConfig extends Configuration {
 
   public String getPassword() {
     return this.get(GRILL_USER_PASS, DEFAULT_USER_PASS);
+  }
+
+  public String getMLResourcePath() {
+    return this.get(GRILL_ML_RESOURCE_PATH, DEFAULT_ML_RESOURCE_PATH);
   }
 }

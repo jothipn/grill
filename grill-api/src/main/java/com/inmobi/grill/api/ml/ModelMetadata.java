@@ -35,4 +35,19 @@ public class ModelMetadata {
 
   @XmlElement @Getter
   private String features;
+
+  @Override
+  public String toString() {
+    StringBuilder builder = new StringBuilder();
+
+    builder.append("Algorithm: ").append(algorithm).append('\n');
+    builder.append("Model ID: ").append(modelID).append('\n');
+    builder.append("Training table: ").append(table).append('\n');
+    builder.append("Features: ").append(features).append('\n');
+    builder.append("Labelled Column: ").append(labelColumn).append('\n');
+    builder.append("Training params: ").append(params).append('\n');
+    builder.append("Created on: ").append(createdAt).append('\n');
+    builder.append("Model saved at: ").append(modelPath).append('\n');
+    return builder.toString();
+  }
 }

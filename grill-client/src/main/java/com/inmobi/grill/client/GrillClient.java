@@ -22,14 +22,25 @@ package com.inmobi.grill.client;
 
 import com.google.common.collect.Maps;
 import com.inmobi.grill.api.APIResult;
+import com.inmobi.grill.api.StringList;
 import com.inmobi.grill.api.metastore.*;
+import com.inmobi.grill.api.ml.ModelMetadata;
+import com.inmobi.grill.api.ml.TestReport;
 import com.inmobi.grill.api.query.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Form;
+import javax.ws.rs.core.MediaType;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public class GrillClient {
@@ -483,5 +494,44 @@ public class GrillClient {
     return statement.executeQuery(phandle, false);
   }
 
+  public ModelMetadata getMLModelMetadata(String algorithm, String modelID) {
+    return new GrillMLClient(conn).getModelMetadata(algorithm, modelID);
+  }
 
+  public void deleteMLModel(String algorithm, String modelID) {
+    new GrillMLClient(conn).deleteModel(algorithm, modelID);
+  }
+
+  public List<String> getMLModelsForAlgorithm(String algorithm) {
+    return new GrillMLClient(conn).getModelsForAlgorithm(algorithm);
+  }
+
+  public List<String> getMLTrainerNames() {
+    return new GrillMLClient(conn).getTrainerNames();
+  }
+
+  public String trainMLModel(String algorithm, Map<String, String> params) {
+    return new GrillMLClient(conn).trainModel(algorithm, params);
+  }
+
+  public String testMLModel(String table, String algorithm, String modelID) {
+    return new GrillMLClient(conn).testModel(table, algorithm, modelID);
+  }
+
+  public List<String> getMLTestReportsOfAlgorithm(String algorithm) {
+    return new GrillMLClient(conn).getTestReportsOfAlgorithm(algorithm);
+  }
+
+
+  public TestReport getMLTestReport(String algorithm, String reportID) {
+    return new GrillMLClient(conn).getTestReport(algorithm, reportID);
+  }
+
+  public String deleteMLTestReport(String algorithm, String reportID) {
+    return new GrillMLClient(conn).deleteTestReport(algorithm, reportID);
+  }
+
+  public String predictSingle(String algorithm, String modelID, Map<String,String> features) {
+    return new GrillMLClient(conn).predictSingle(algorithm, modelID, features);
+  }
 }

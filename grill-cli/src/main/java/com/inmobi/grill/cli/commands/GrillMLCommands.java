@@ -3,6 +3,7 @@ package com.inmobi.grill.cli.commands;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
+import com.inmobi.grill.cli.skel.GrillPromptProvider;
 import com.inmobi.grill.client.GrillClient;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -17,10 +18,35 @@ import java.util.Map;
 @Component
 public class GrillMLCommands implements CommandMarker {
   public static final Log LOG = LogFactory.getLog(GrillMLCommands.class);
+  private static final String MISSING_MODEL_ID = "Model ID not present in session and not provided explicitly";
+  private static final String MISSING_REPORT_ID = "Report ID not present in session and not provided explicitly";
   private GrillClient client;
+  private String cliSessionModelId;
+  private String cliSessionReportId;
+  private GrillPromptProvider promptProvider;
 
   public void setClient(GrillClient client) {
     this.client = client;
+  }
+
+  public void setPromptProvider(GrillPromptProvider promptProvider) {
+    this.promptProvider = promptProvider;
+  }
+
+  void updatePrompt() {
+    promptProvider.setPrompt("[Model= %s , Report= %s ]\n",
+      cliSessionModelId, cliSessionReportId);
+  }
+
+  private boolean isNotBlank(String str) {
+    return str != null && !str.isEmpty();
+  }
+
+  private String getNonNull(String str1, String str2) {
+    if (isNotBlank(str1)) {
+      return str1;
+    }
+    return str2;
   }
 
   @CliCommand(value = "ml show algorithms",
@@ -37,19 +63,32 @@ public class GrillMLCommands implements CommandMarker {
   }
 
   @CliCommand(value = "ml describe model",
-  help = "Describe model metadata")
+    help = "Describe model metadata")
   public String describeModel(
-    @CliOption(key = {"algorithm"}, mandatory = true, help="algorithm name") String algorithm,
-    @CliOption(key = {"modelID"}, mandatory=true, help="model ID") String modelID) {
-    return client.getMLModelMetadata(algorithm, modelID).toString();
+    @CliOption(key = {"algorithm"}, mandatory = true, help = "algorithm name") String algorithm,
+    @CliOption(key = {"modelID"}, mandatory = false, help = "model ID") String modelID) {
+    modelID = getNonNull(modelID, cliSessionModelId);
+    if (isNotBlank(modelID)) {
+      setCliSessionModelID(modelID);
+      return client.getMLModelMetadata(algorithm, modelID).toString();
+    } else {
+      return MISSING_MODEL_ID;
+    }
   }
+
 
   @CliCommand(value ="ml delete model", help = "Delete an ML model")
   public String deleteModel(
     @CliOption(key = {"algorithm"}, mandatory = true, help="algorithm name") String algorithm,
-    @CliOption(key = {"modelID"}, mandatory=true, help="model ID") String modelID) {
-    client.deleteMLModel(algorithm, modelID);
-    return "Deleted model " + modelID;
+    @CliOption(key = {"modelID"}, mandatory=false, help="model ID") String modelID) {
+    modelID = getNonNull(modelID, cliSessionModelId);
+    if (isNotBlank(modelID)) {
+      setCliSessionModelID(modelID);
+      client.deleteMLModel(algorithm, modelID);
+      return "Deleted model " + modelID;
+    } else {
+      return MISSING_MODEL_ID;
+    }
   }
 
   @CliCommand(value = "ml train model", help = "Train a new ML model")
@@ -81,17 +120,23 @@ public class GrillMLCommands implements CommandMarker {
       trainParams.put(key, value);
     }
 
-    String modelId = client.trainMLModel(algorithm, trainParams);
-    return "Created model " + modelId;
+    setCliSessionModelID(client.trainMLModel(algorithm, trainParams));
+    return "Created model " + cliSessionModelId;
   }
 
   @CliCommand(value = "ml test model", help = "Test an ML model")
   public String testMLModel(
     @CliOption(key = {"table"}, mandatory = true, help = "Name of input table to run the test on") String table,
     @CliOption(key = {"algorithm"}, mandatory = true, help = "Algorithm name") String algorithm,
-    @CliOption(key = {"modelID"}, mandatory = true, help = "Model ID") String modelID) {
-    String testReportID = client.testMLModel(table, algorithm, modelID);
-    return "Created test report " + testReportID;
+    @CliOption(key = {"modelID"}, mandatory = false, help = "Model ID") String modelID) {
+    modelID = getNonNull(modelID, cliSessionModelId);
+    if (isNotBlank(modelID)) {
+      setCliSessionModelID(modelID);
+      setCliSessionReportId(client.testMLModel(table, algorithm, modelID));
+      return "Created test report " + cliSessionReportId;
+    } else {
+      return MISSING_MODEL_ID;
+    }
   }
 
   @CliCommand(value = "ml show reports", help = "Show list of ML Test reports for a given algorithm")
@@ -104,14 +149,47 @@ public class GrillMLCommands implements CommandMarker {
   public String describeMLTestReport(
     @CliOption(key = {"algorithm"}, mandatory = true, help = "Algorithm name") String algorithm,
     @CliOption(key = {"reportID"}, mandatory = true, help = "Test report ID") String reportID) {
-    return client.getMLTestReport(algorithm, reportID).toString();
+    reportID = getNonNull(reportID, cliSessionReportId);
+    if (isNotBlank(reportID)) {
+      setCliSessionReportId(reportID);
+      return client.getMLTestReport(algorithm, reportID).toString();
+    } else {
+      return MISSING_REPORT_ID;
+    }
   }
 
   @CliCommand(value = "ml delete report", help = "Delete an ML Test report")
   public String deleteMLTestReport(
     @CliOption(key = {"algorithm"}, mandatory = true, help = "Algorithm name") String algorithm,
     @CliOption(key = {"reportID"}, mandatory = true, help = "Test report ID") String reportID) {
-    client.deleteMLTestReport(algorithm, reportID);
-    return "Deleted report " + reportID;
+    reportID = getNonNull(reportID, cliSessionReportId);
+    if (isNotBlank(reportID)) {
+      setCliSessionReportId(reportID);
+      client.deleteMLTestReport(algorithm, reportID);
+      return "Deleted report " + reportID;
+    } else {
+      return MISSING_REPORT_ID;
+    }
   }
+
+  @CliCommand(value = "ml show modelID", help = "Returns current model ID in the session")
+  public String showSessionModelID() {
+    return cliSessionModelId;
+  }
+
+  @CliCommand(value = "ml show reportID", help = "Returns current report ID in the session")
+  public String showSessionReportID() {
+    return cliSessionReportId;
+  }
+
+  void setCliSessionModelID(String cliSessionModelID) {
+    this.cliSessionModelId = cliSessionModelID;
+    updatePrompt();
+  }
+
+  void setCliSessionReportId(String reportId) {
+    this.cliSessionReportId = reportId;
+    updatePrompt();
+  }
+
 }

@@ -28,6 +28,7 @@
 
   <context:component-scan base-package="com.inmobi.grill.cli"/>
   <bean id="client" class="com.inmobi.grill.client.GrillClient"/>
+  <bean id="promptProvider" class="com.inmobi.grill.cli.skel.GrillPromptProvider"/>
 
   <bean id="grillConnectionCommands"
         class="com.inmobi.grill.cli.commands.GrillConnectionCommands">
@@ -68,5 +69,11 @@
         class="com.inmobi.grill.cli.commands.GrillNativeTableCommands">
     <property name="client" ref="client"/>
   </bean>
+
+    <bean id="grillMLCommands"
+          class="com.inmobi.grill.cli.commands.GrillMLCommands">
+        <property name="client" ref="client"/>
+        <property name="promptProvider" ref="promptProvider"/>
+    </bean>
 
 </beans>

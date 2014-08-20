@@ -29,12 +29,21 @@ import org.springframework.stereotype.Component;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class GrillPromptProvider extends DefaultPromptProvider {
 
+  private String DEFAULT_PROMPT = "grill-shell>";
+  private String prompt = DEFAULT_PROMPT;
+
+  public void setPrompt(String format, String ... args) {
+    prompt = String.format(DEFAULT_PROMPT + format, args);
+  }
+
+  public void resetPrompt() {
+    prompt = DEFAULT_PROMPT;
+  }
 
   @Override
   public String getPrompt() {
-    return "grill-shell>";
+    return prompt;
   }
-
 
   @Override
   public String name() {

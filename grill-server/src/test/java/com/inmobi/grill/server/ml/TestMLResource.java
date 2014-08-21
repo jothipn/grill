@@ -52,7 +52,7 @@ public class TestMLResource extends GrillJerseyTest {
   private transient ThriftCLIServiceClient hiveClient;
   private transient SessionHandle session;
   private transient Map<String, String> confOverlay = new HashMap<String, String>();
-  private transient MLServiceImpl mlService;
+  private transient GrillMLHandler mlService;
 
   @BeforeTest
   public void setUp() throws Exception {
@@ -211,7 +211,7 @@ public class TestMLResource extends GrillJerseyTest {
 
     // Run a test
     LOG.info("@@ Begin test model " + modelID);
-    mlService = (MLServiceImpl) GrillServices.get().getService(MLService.NAME);
+    mlService = (GrillMLHandler) GrillServices.get().getService(MLService.NAME);
     GrillSessionHandle session =  mlService.openSession("foo", "bar", confOverlay);
 
     WebTarget modelTestTarget =

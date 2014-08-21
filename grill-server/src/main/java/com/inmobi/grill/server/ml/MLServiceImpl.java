@@ -26,9 +26,8 @@ import java.io.ObjectOutputStream;
 import java.util.*;
 
 public class MLServiceImpl extends GrillService implements MLService {
-  public static final Log LOG = LogFactory.getLog(MLServiceImpl.class);
-  protected List<MLDriver> drivers;
-  private HiveConf conf;
+  public static final Log LOG = LogFactory.getLog(GrillMLHandler.class);
+  private GrillMLHandler mlHandler;
 
   public MLServiceImpl(String name, CLIService cliService) {
     super(NAME, cliService);
@@ -38,204 +37,51 @@ public class MLServiceImpl extends GrillService implements MLService {
     this(NAME, cliService);
   }
 
-  protected HiveConf getConf() {
-    return conf;
-  }
-
   @Override
   public List<String> getAlgorithms() {
-    List<String> trainers = new ArrayList<String>();
-    for (MLDriver driver : drivers) {
-      trainers.addAll(driver.getTrainerNames());
-    }
-    return trainers;
+    return mlHandler.getAlgorithms();
   }
 
   @Override
   public MLTrainer getTrainerForName(String algorithm) throws GrillException {
-    for (MLDriver driver : drivers) {
-      if (driver.isTrainerSupported(algorithm)) {
-        return driver.getTrainerInstance(algorithm);
-      }
-    }
-    throw new GrillException("Trainer not supported " + algorithm);
+    return mlHandler.getTrainerForName(algorithm);
   }
 
   @Override
   public String train(String table, String algorithm, String[] args) throws GrillException {
-    MLTrainer trainer = getTrainerForName(algorithm);
-
-    String modelId = UUID.randomUUID().toString();
-
-    LOG.info("Begin training model " + modelId + ", trainer=" + algorithm + ", table=" + table + ", params="
-      + Arrays.toString(args));
-
-    String database = null;
-    if (SessionState.get() != null) {
-      database = SessionState.get().getCurrentDatabase();
-    } else {
-      database = "default";
-    }
-
-    MLModel model = trainer.train(getHiveConf(), database, table, modelId, args);
-
-    LOG.info("Done training model: " + modelId);
-
-    model.setCreatedAt(new Date());
-    model.setTrainerName(algorithm);
-
-    Path modelLocation = null;
-    try {
-      modelLocation = persistModel(model);
-      LOG.info("Model saved: " + modelId + ", trainer: " + algorithm + ", path: " + modelLocation);
-      return model.getId();
-    } catch (IOException e) {
-      throw new GrillException("Error saving model " + modelId + " for trainer " + algorithm, e);
-    }
+    return mlHandler.train(table, algorithm, args);
   }
-
-  private Path getTrainerDir(String trainerName) throws IOException{
-    String modelSaveBaseDir =
-      conf.get(ModelLoader.MODEL_PATH_BASE_DIR, ModelLoader.MODEL_PATH_BASE_DIR_DEFAULT);
-    return new Path(new Path(modelSaveBaseDir), trainerName);
-  }
-
-  private Path persistModel(MLModel model) throws IOException {
-    // Get model save path
-    Path trainerDir = getTrainerDir(model.getTrainerName());
-    FileSystem fs = trainerDir.getFileSystem(conf);
-
-    if (!fs.exists(trainerDir)) {
-      fs.mkdirs(trainerDir);
-    }
-
-    Path modelSavePath = new Path(trainerDir, model.getId());
-    ObjectOutputStream outputStream = null;
-
-    try {
-      outputStream = new ObjectOutputStream(fs.create(modelSavePath, false));
-      outputStream.writeObject(model);
-      outputStream.flush();
-    } catch (IOException io) {
-      LOG.error("Error saving model " + model.getId() + " reason: " + io.getMessage());
-      throw io;
-    } finally {
-      IOUtils.closeQuietly(outputStream);
-    }
-    return modelSavePath;
-  }
-
 
   @Override
   public List<String> getModels(String algorithm) throws GrillException {
-    try {
-      Path trainerDir = getTrainerDir(algorithm);
-      FileSystem fs = trainerDir.getFileSystem(conf);
-      if (!fs.exists(trainerDir)) {
-        return null;
-      }
-
-      List<String> models = new ArrayList<String>();
-
-      for (FileStatus stat : fs.listStatus(trainerDir)) {
-        models.add(stat.getPath().getName());
-      }
-
-      if (models.isEmpty()) {
-        return null;
-      }
-
-      return models;
-    } catch (IOException ioex) {
-      throw new GrillException(ioex);
-    }
+    return mlHandler.getModels(algorithm);
   }
 
   @Override
   public MLModel getModel(String algorithm, String modelId) throws GrillException {
-    try {
-      return ModelLoader.loadModel(conf, algorithm, modelId);
-    } catch (IOException e) {
-      throw new GrillException(e);
-    }
+    return mlHandler.getModel(algorithm, modelId);
   }
 
   @Override
   public synchronized void init(HiveConf hiveConf) {
-    this.conf = hiveConf;
-
-    // Get all the drivers
-    String[] driverClasses = hiveConf.getStrings("grill.ml.drivers");
-
-    if (driverClasses == null || driverClasses.length == 0) {
-      throw new RuntimeException("No ML Drivers specified in conf");
-    }
-
-    LOG.info("Loading drivers " + Arrays.toString(driverClasses));
-    drivers = new ArrayList<MLDriver>(driverClasses.length);
-
-    for (String driverClass : driverClasses) {
-      Class<?> cls;
-      try {
-        cls = Class.forName(driverClass);
-      } catch (ClassNotFoundException e) {
-        LOG.error("Driver class not found " + driverClass);
-        continue;
-      }
-
-      if (!MLDriver.class.isAssignableFrom(cls)) {
-        LOG.warn("Not a driver class " + driverClass);
-        continue;
-      }
-
-      try {
-        Class<? extends MLDriver> mlDriverClass = (Class<? extends MLDriver>) cls;
-        MLDriver driver = mlDriverClass.newInstance();
-        driver.init(hiveConf);
-        drivers.add(driver);
-        LOG.info("Added driver " + driverClass);
-      } catch (Exception e) {
-        LOG.error("Failed to create driver " + driverClass + " reason: " + e.getMessage() , e);
-      }
-    }
-    if (drivers.isEmpty()) {
-      throw new RuntimeException("No ML drivers loaded");
-    }
-
+    mlHandler = new GrillMLHandler(hiveConf);
+    mlHandler.init(hiveConf);
     super.init(hiveConf);
     LOG.info("Inited ML service");
   }
 
   @Override
   public synchronized void start() {
-    for (MLDriver driver : drivers) {
-      try {
-        driver.start();
-      } catch (GrillException e) {
-        LOG.error("Failed to start driver " + driver, e);
-      }
-    }
+    mlHandler.start();
     super.start();
     LOG.info("Started ML service");
   }
 
   @Override
   public synchronized void stop() {
-    for (MLDriver driver : drivers) {
-      try {
-        driver.stop();
-      } catch (GrillException e) {
-        LOG.error("Failed to stop driver " + driver, e);
-      }
-    }
-    drivers.clear();
+    mlHandler.stop();
     super.stop();
     LOG.info("Stopped ML service");
-  }
-
-  @Override
-  public synchronized HiveConf getHiveConf() {
-    return conf;
   }
 
   public void clearModels() {
@@ -244,7 +90,7 @@ public class MLServiceImpl extends GrillService implements MLService {
 
   @Override
   public String getModelPath(String algorithm, String modelID) {
-    return ModelLoader.getModelLocation(conf, algorithm, modelID).toString();
+    return mlHandler.getModelPath(algorithm, modelID);
   }
 
   @Override
@@ -252,147 +98,18 @@ public class MLServiceImpl extends GrillService implements MLService {
                                 String table,
                                 String algorithm,
                                 String modelID) throws GrillException {
-    // check if algorithm exists
-    if (!getAlgorithms().contains(algorithm)) {
-      throw new GrillException("No such algorithm " + algorithm);
-    }
 
-    MLModel model;
-    try {
-      model = ModelLoader.loadModel(conf, algorithm, modelID);
-    } catch (IOException e) {
-      throw new GrillException(e);
-    }
-
-    if (model == null) {
-      throw new GrillException("Model not found: " + modelID + " algorithm=" + algorithm);
-    }
-
-    String database = null;
-
-    if (SessionState.get() != null) {
-      database = SessionState.get().getCurrentDatabase();
-    }
-
-    String testID = UUID.randomUUID().toString().replace("-","_");
-    final String testTable = "ml_test_" + testID;
-    final String testResultColumn = "prediction_result";
-
-    //TODO support error metric UDAFs
-    TableTestingSpec spec = TableTestingSpec.newBuilder()
-      .hiveConf(conf)
-      .database(database == null ? "default" : database)
-      .table(table)
-      .featureColumns(model.getFeatureColumns())
-      .outputColumn(testResultColumn)
-      .labeColumn(model.getLabelColumn())
-      .algorithm(algorithm)
-      .modelID(modelID)
-      .outputTable(testTable)
-      .build();
-    String testQuery = spec.getTestQuery();
-
-    if (testQuery == null) {
-      throw new GrillException("Invalid test spec. "
-        + "table=" + table + " algorithm=" + algorithm + " modelID=" + modelID);
-    }
-
-    LOG.info("Running test query " + testQuery);
-
-    // Run the query in query executions service
-    QueryExecutionService queryService = (QueryExecutionService) GrillServices.get().getService("query");
-
-    GrillConf queryConf = new GrillConf();
-    queryConf.addProperty(GrillConfConstants.GRILL_PERSISTENT_RESULT_SET, false + "");
-    queryConf.addProperty(GrillConfConstants.QUERY_PERSISTENT_RESULT_INDRIVER, false + "");
-
-    QueryHandle testQueryHandle = queryService.executeAsync(sessionHandle,
-      testQuery,
-      queryConf
-    );
-
-    // Wait for test query to complete
-    GrillQuery query = queryService.getQuery(sessionHandle, testQueryHandle);
-    while (!query.getStatus().isFinished()) {
-      try {
-        Thread.sleep(1000);
-      } catch (InterruptedException e) {
-        throw new GrillException(e);
-      }
-
-      query = queryService.getQuery(sessionHandle, testQueryHandle);
-      LOG.info("Polling for test query " + testID + " grill query handle= " + testQueryHandle
-        + " status: " + query.getStatus().getStatus());
-    }
-
-    if (query.getStatus().getStatus() != QueryStatus.Status.SUCCESSFUL) {
-      throw new GrillException("Failed to run test " + algorithm
-        + ", modelID=" + modelID + " table=" + table + " grill query: " + testQueryHandle
-      + " reason= " + query.getStatus().getErrorMessage());
-    }
-
-    MLTestReport testReport = new MLTestReport();
-    testReport.setReportID(testID);
-    testReport.setAlgorithm(algorithm);
-    testReport.setFeatureColumns(model.getFeatureColumns());
-    testReport.setLabelColumn(model.getLabelColumn());
-    testReport.setModelID(model.getId());
-    testReport.setOutputColumn(testResultColumn);
-    testReport.setOutputTable(testTable);
-    testReport.setTestTable(table);
-    testReport.setQueryID(testQueryHandle.toString());
-
-    // Save test report
-    persistTestReport(testReport);
-    LOG.info("Saved test report " + testReport.getReportID());
-    return testReport;
-  }
-
-  private void persistTestReport(MLTestReport testReport) throws GrillException {
-    LOG.info("saving test report " + testReport.getReportID());
-    try {
-      ModelLoader.saveTestReport(conf, testReport);
-      LOG.info("Saved report " + testReport.getReportID());
-    } catch (IOException e) {
-      LOG.error("Error saving report " + testReport.getReportID() + " reason: " + e.getMessage());
-    }
+    return mlHandler.testModel(sessionHandle, table, algorithm, modelID, new DirectQueryRunner(sessionHandle));
   }
 
   @Override
   public List<String> getTestReports(String algorithm) throws GrillException {
-    Path reportBaseDir = new Path(conf.get(ModelLoader.TEST_REPORT_BASE_DIR,
-      ModelLoader.TEST_REPORT_BASE_DIR_DEFAULT));
-    FileSystem fs = null;
-
-    try {
-      fs = reportBaseDir.getFileSystem(conf);
-      if (!fs.exists(reportBaseDir)) {
-        return null;
-      }
-
-      Path algoDir = new Path(reportBaseDir, algorithm);
-      if (!fs.exists(algoDir)) {
-        return null;
-      }
-
-      List<String> reports = new ArrayList<String>();
-      for (FileStatus stat : fs.listStatus(algoDir)) {
-        reports.add(stat.getPath().getName());
-      }
-      return reports;
-    } catch (IOException e) {
-      LOG.error("Error reading report list for " + algorithm, e);
-      return null;
-    }
+    return mlHandler.getTestReports(algorithm);
   }
 
   @Override
   public MLTestReport getTestReport(String algorithm, String reportID) throws GrillException {
-    try {
-      return ModelLoader.loadReport(conf, algorithm, reportID);
-    } catch (IOException e) {
-      throw new GrillException(e);
-    }
+    return mlHandler.getTestReport(algorithm, reportID);
   }
 
   @Override
@@ -402,23 +119,56 @@ public class MLServiceImpl extends GrillService implements MLService {
 
   @Override
   public void deleteModel(String algorithm, String modelID) throws GrillException {
-    try {
-      ModelLoader.deleteModel(conf, algorithm, modelID);
-      LOG.info("DELETED model " + modelID + " algorithm=" + algorithm);
-    } catch (IOException e) {
-      LOG.error("Error deleting model file. algorithm=" + algorithm + " model=" + modelID + " reason: " + e.getMessage(), e);
-      throw new GrillException("Unable to delete model " + modelID +" for algorithm " + algorithm, e);
-    }
+    mlHandler.deleteModel(algorithm, modelID);
   }
 
   @Override
   public void deleteTestReport(String algorithm, String reportID) throws GrillException {
-    try {
-      ModelLoader.deleteTestReport(conf, algorithm, reportID);
-      LOG.info("DELETED report=" + reportID + " algorithm=" + algorithm);
-    } catch (IOException e) {
-      LOG.error("Error deleting report " + reportID + " algorithm=" + algorithm + " reason: " + e.getMessage(), e);
-      throw new GrillException("Unable to delete report " + reportID + " for algorithm " + algorithm, e);
+    mlHandler.deleteTestReport(algorithm, reportID);
+  }
+
+  /**
+   * Run the test model query directly in the current grill server process
+   */
+  private class DirectQueryRunner extends TestQueryRunner {
+
+    public DirectQueryRunner(GrillSessionHandle sessionHandle) {
+      super(sessionHandle);
+    }
+
+    @Override
+    public QueryHandle runQuery(String testQuery) throws GrillException {
+      // Run the query in query executions service
+      QueryExecutionService queryService = (QueryExecutionService) GrillServices.get().getService("query");
+
+      GrillConf queryConf = new GrillConf();
+      queryConf.addProperty(GrillConfConstants.GRILL_PERSISTENT_RESULT_SET, false + "");
+      queryConf.addProperty(GrillConfConstants.QUERY_PERSISTENT_RESULT_INDRIVER, false + "");
+
+      QueryHandle testQueryHandle = queryService.executeAsync(sessionHandle,
+        testQuery,
+        queryConf
+      );
+
+      // Wait for test query to complete
+      GrillQuery query = queryService.getQuery(sessionHandle, testQueryHandle);
+      LOG.info("Submitted query " + testQueryHandle.getHandleId());
+      while (!query.getStatus().isFinished()) {
+        try {
+          Thread.sleep(1000);
+        } catch (InterruptedException e) {
+          throw new GrillException(e);
+        }
+
+        query = queryService.getQuery(sessionHandle, testQueryHandle);
+      }
+
+      if (query.getStatus().getStatus() != QueryStatus.Status.SUCCESSFUL) {
+        throw new GrillException("Failed to run test query: " + testQueryHandle.getHandleId()
+          + " reason= " + query.getStatus().getErrorMessage());
+      }
+
+      return testQueryHandle;
     }
   }
 }

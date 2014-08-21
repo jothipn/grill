@@ -13,6 +13,7 @@ import org.springframework.shell.core.annotation.CliOption;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Component
@@ -59,7 +60,11 @@ public class GrillMLCommands implements CommandMarker {
   help = "Get list of models for an algorithm")
   public String getModelsOfAlgorithm(
     @CliOption(key = {"algorithm"}, mandatory = true, help="algorithm name") String algorithm) {
-    return Joiner.on('\n').join(client.getMLModelsForAlgorithm(algorithm));
+    List<String> modelIds = client.getMLModelsForAlgorithm(algorithm);
+    if (modelIds == null || modelIds.isEmpty()) {
+      return "Models not found for " + algorithm;
+    }
+    return Joiner.on('\n').join(modelIds);
   }
 
   @CliCommand(value = "ml describe model",
@@ -70,7 +75,8 @@ public class GrillMLCommands implements CommandMarker {
     modelID = getNonNull(modelID, cliSessionModelId);
     if (isNotBlank(modelID)) {
       setCliSessionModelID(modelID);
-      return client.getMLModelMetadata(algorithm, modelID).toString();
+      String modelMetadata = client.getMLModelMetadata(algorithm, modelID).toString();
+      return modelMetadata == null ? ("Model not found " + algorithm + "/" + modelID) : modelMetadata;
     } else {
       return MISSING_MODEL_ID;
     }
@@ -142,7 +148,11 @@ public class GrillMLCommands implements CommandMarker {
   @CliCommand(value = "ml show reports", help = "Show list of ML Test reports for a given algorithm")
   public String showMLTestReports(
     @CliOption(key = {"algorithm"}, mandatory = true, help = "Algorithm name") String algorithm) {
-    return Joiner.on('\n').join(client.getMLTestReportsOfAlgorithm(algorithm));
+    List<String> reports = client.getMLTestReportsOfAlgorithm(algorithm);
+    if (reports == null || reports.isEmpty()) {
+      return "Reports not found for " + algorithm;
+    }
+    return Joiner.on('\n').join(reports);
   }
 
   @CliCommand(value = "ml describe report", help = "Describe an ML Test report")
@@ -152,7 +162,8 @@ public class GrillMLCommands implements CommandMarker {
     reportID = getNonNull(reportID, cliSessionReportId);
     if (isNotBlank(reportID)) {
       setCliSessionReportId(reportID);
-      return client.getMLTestReport(algorithm, reportID).toString();
+      String report = client.getMLTestReport(algorithm, reportID).toString();
+      return report == null ? ("Report not found " + algorithm + "/" + reportID) : report;
     } else {
       return MISSING_REPORT_ID;
     }

@@ -166,6 +166,11 @@ public class MLServiceImpl extends GrillService implements MLService {
 
     // Get all the drivers
     String[] driverClasses = hiveConf.getStrings("grill.ml.drivers");
+
+    if (driverClasses == null || driverClasses.length == 0) {
+      throw new RuntimeException("No ML Drivers specified in conf");
+    }
+
     LOG.info("Loading drivers " + Arrays.toString(driverClasses));
     drivers = new ArrayList<MLDriver>(driverClasses.length);
 
@@ -193,6 +198,10 @@ public class MLServiceImpl extends GrillService implements MLService {
         LOG.error("Failed to create driver " + driverClass + " reason: " + e.getMessage() , e);
       }
     }
+    if (drivers.isEmpty()) {
+      throw new RuntimeException("No ML drivers loaded");
+    }
+
     super.init(hiveConf);
     LOG.info("Inited ML service");
   }

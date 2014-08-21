@@ -10,6 +10,7 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.client.*;
 import javax.ws.rs.core.Form;
 import javax.ws.rs.core.MediaType;
@@ -41,9 +42,13 @@ public class GrillMLClient {
 
 
   ModelMetadata getModelMetadata(String algorithm, String modelID) {
-    return getMLWebTarget()
-      .path("models")
-      .path(algorithm).path(modelID).request().get(ModelMetadata.class);
+    try {
+      return getMLWebTarget()
+        .path("models")
+        .path(algorithm).path(modelID).request().get(ModelMetadata.class);
+    } catch (NotFoundException exc) {
+      return null;
+    }
   }
 
   void deleteModel(String algorithm, String modelID) {
@@ -55,11 +60,15 @@ public class GrillMLClient {
   }
 
   List<String> getModelsForAlgorithm(String algorithm) {
-    StringList models = getMLWebTarget()
-      .path("models")
-      .path(algorithm)
-      .request().get(StringList.class);
-    return models == null ? null : models.getElements();
+    try {
+      StringList models = getMLWebTarget()
+        .path("models")
+        .path(algorithm)
+        .request().get(StringList.class);
+      return models == null ? null : models.getElements();
+    } catch (NotFoundException exc) {
+      return null;
+    }
   }
 
   List<String> getTrainerNames() {
@@ -98,21 +107,29 @@ public class GrillMLClient {
   }
 
   List<String> getTestReportsOfAlgorithm(String algorithm) {
-    StringList list = getMLWebTarget()
-      .path("reports")
-      .path(algorithm)
-      .request()
-      .get(StringList.class);
-    return list == null ? null : list.getElements();
+    try {
+      StringList list = getMLWebTarget()
+        .path("reports")
+        .path(algorithm)
+        .request()
+        .get(StringList.class);
+      return list == null ? null : list.getElements();
+    } catch (NotFoundException exc) {
+      return null;
+    }
   }
 
   TestReport getTestReport(String algorithm, String reportID) {
-    return getMLWebTarget()
-      .path("reports")
-      .path(algorithm)
-      .path(reportID)
-      .request()
-      .get(TestReport.class);
+    try {
+      return getMLWebTarget()
+        .path("reports")
+        .path(algorithm)
+        .path(reportID)
+        .request()
+        .get(TestReport.class);
+    } catch (NotFoundException exc) {
+      return null;
+    }
   }
 
   String deleteTestReport(String algorithm, String reportID) {

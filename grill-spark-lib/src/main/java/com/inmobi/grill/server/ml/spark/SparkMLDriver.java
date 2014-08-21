@@ -97,7 +97,7 @@ public class SparkMLDriver implements MLDriver {
     } else if ("local".equalsIgnoreCase(sparkAppMaster) || StringUtils.isBlank(sparkAppMaster)) {
       clientMode = SparkClientMode.EMBEDDED;
     }
-
+    sparkConf.setAppName("grill-ml");
     LOG.info("Spark home is set to " + sparkConf.get("spark.home"));
   }
 

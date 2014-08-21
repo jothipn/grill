@@ -30,7 +30,7 @@
 
 <property>
   <name>grill.servicenames</name>
-  <value>session,query,metastore,scheduler,quota</value>
+  <value>session,query,metastore,scheduler,quota,ml</value>
   <description>These services would be started in the specified order when grill-server starts up</description>
 </property>
 
@@ -180,6 +180,19 @@
     <name>grill.ml.service.impl</name>
     <value>com.inmobi.grill.server.ml.MLServiceImpl</value>
     <description>ML service implementation</description>
+</property>
+
+<property>
+    <name>grill.ml.drivers</name>
+    <value>com.inmobi.grill.server.ml.spark.SparkMLDriver</value>
+    <description>List of comma separated ML driver classes</description>
+</property>
+
+<property>
+    <name>grill.ml.sparkdriver.spark.master</name>
+    <value>local</value>
+    <description>Spark master configuration.
+        Set to yarn-client or yarn-cluster when deploying to a Yarn cluster</description>
 </property>
 
 </configuration>

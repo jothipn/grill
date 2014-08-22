@@ -178,13 +178,13 @@
 
 <property>
     <name>grill.ml.service.impl</name>
-    <value>com.inmobi.grill.server.ml.GrillML</value>
+    <value>com.inmobi.grill.server.ml.MLServiceImpl</value>
     <description>ML service implementation</description>
 </property>
 
 <property>
     <name>grill.ml.drivers</name>
-    <value>com.inmobi.grill.server.ml.spark.SparkMLDriver</value>
+    <value>com.inmobi.grill.ml.spark.SparkMLDriver</value>
     <description>List of comma separated ML driver classes</description>
 </property>
 

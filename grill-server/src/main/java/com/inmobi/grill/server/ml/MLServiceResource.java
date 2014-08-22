@@ -50,6 +50,21 @@ public class MLServiceResource {
     return result;
   }
 
+  @GET
+  @Path("trainers/{algorithm}")
+  public StringList getParamDescription(@PathParam("algorithm") String algorithm) {
+    Map<String, String> paramDesc = getMlService().getAlgoParamDescription(algorithm);
+    if (paramDesc == null) {
+      throw new NotFoundException("Param description not found for " + algorithm);
+    }
+
+    List<String> descriptions = new ArrayList<String>();
+    for (String key : paramDesc.keySet()) {
+      descriptions.add(key + " : " + paramDesc.get(key));
+    }
+    return new StringList(descriptions);
+  }
+
   /**
    * Get model ID list for a given algorithm
    * @param algorithm algorithm name
@@ -297,8 +312,7 @@ public class MLServiceResource {
       features[i++] = params.getFirst(feature);
     }
 
-    Object prediction = model.predict(features);
     // TODO needs a 'prediction formatter'
-    return prediction.toString();
+    return getMlService().predict(algorithm, modelID, features).toString();
   }
 }

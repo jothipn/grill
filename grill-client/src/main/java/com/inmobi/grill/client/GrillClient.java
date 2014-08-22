@@ -534,4 +534,8 @@ public class GrillClient {
   public String predictSingle(String algorithm, String modelID, Map<String,String> features) {
     return new GrillMLClient(conn).predictSingle(algorithm, modelID, features);
   }
+
+  public List<String> getParamDescriptionOfTrainer(String algorithm) {
+    return new GrillMLClient(conn).getParamDescriptionOfTrainer(algorithm);
+  }
 }

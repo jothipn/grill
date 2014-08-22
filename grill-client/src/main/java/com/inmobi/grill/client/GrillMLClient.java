@@ -152,4 +152,17 @@ public class GrillMLClient {
 
     return target.request().get(String.class);
   }
+
+  List<String> getParamDescriptionOfTrainer(String algorithm) {
+    try {
+      StringList paramHelp = getMLWebTarget()
+        .path("trainers")
+        .path(algorithm)
+        .request(MediaType.APPLICATION_XML)
+        .get(StringList.class);
+      return paramHelp.getElements();
+    } catch (NotFoundException exc) {
+      return null;
+    }
+  }
 }

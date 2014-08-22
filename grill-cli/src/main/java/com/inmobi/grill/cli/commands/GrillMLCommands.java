@@ -193,6 +193,18 @@ public class GrillMLCommands implements CommandMarker {
     return cliSessionReportId;
   }
 
+
+  @CliCommand(value = "ml describe algorithm", help = "Get parameters usage for the algorithm")
+  public String getParamDescForAlgorithm(
+    @CliOption(key = {"algorithm"}, mandatory = true, help = "Algorithm name") String algorithm) {
+    List<String> helps = client.getParamDescriptionOfTrainer(algorithm);
+    if (helps == null) {
+      return "Description not found";
+    }
+
+    return Joiner.on('\n').join(helps);
+  }
+
   void setCliSessionModelID(String cliSessionModelID) {
     this.cliSessionModelId = cliSessionModelID;
     updatePrompt();

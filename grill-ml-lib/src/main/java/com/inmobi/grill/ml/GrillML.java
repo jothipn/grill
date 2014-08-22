@@ -7,6 +7,7 @@ import com.inmobi.grill.api.query.GrillQuery;
 import com.inmobi.grill.api.query.QueryHandle;
 import com.inmobi.grill.api.query.QueryStatus;
 import com.inmobi.grill.ml.spark.SparkMLDriver;
+import com.inmobi.grill.ml.spark.trainers.BaseSparkTrainer;
 import com.inmobi.grill.server.api.GrillConfConstants;
 import com.inmobi.grill.server.api.ml.*;
 import org.apache.commons.io.IOUtils;
@@ -28,6 +29,7 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.*;
@@ -376,8 +378,10 @@ public class GrillML {
     }
   }
 
-  public LabelledPrediction predict(String algorithm, String modelID, Object[] features) throws GrillException {
-    return null;
+  public Object predict(String algorithm, String modelID, Object[] features) throws GrillException {
+    // Load the model instance
+    MLModel<?> model = getModel(algorithm, modelID);
+    return model.predict(features);
   }
 
   public void deleteModel(String algorithm, String modelID) throws GrillException {
@@ -399,6 +403,14 @@ public class GrillML {
       LOG.error("Error deleting report " + reportID + " algorithm=" + algorithm + " reason: " + e.getMessage(), e);
       throw new GrillException("Unable to delete report " + reportID + " for algorithm " + algorithm, e);
     }
+  }
+
+  public Map<String, String> getAlgoParamDescription(String algorithm) throws GrillException {
+    MLTrainer trainer = getTrainerForName(algorithm);
+    if (trainer instanceof BaseSparkTrainer) {
+      return ((BaseSparkTrainer) trainer).getArgUsage();
+    }
+    return null;
   }
 
   /**

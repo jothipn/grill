@@ -5,6 +5,7 @@ import com.inmobi.grill.ml.spark.TableTrainingSpec;
 import com.inmobi.grill.ml.spark.models.BaseSparkClassificationModel;
 import com.inmobi.grill.server.api.ml.MLModel;
 import com.inmobi.grill.server.api.ml.MLTrainer;
+import com.inmobi.grill.server.api.ml.TrainerParam;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -14,6 +15,7 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.mllib.regression.LabeledPoint;
 import org.apache.spark.rdd.RDD;
 
+import java.lang.reflect.Field;
 import java.util.*;
 
 public abstract class BaseSparkTrainer implements MLTrainer {
@@ -25,10 +27,19 @@ public abstract class BaseSparkTrainer implements MLTrainer {
   protected JavaSparkContext sparkContext;
   protected Map<String, String> params;
   protected transient HiveConf conf;
-  private double trainingFraction;
+
+  @TrainerParam(name = "trainingFraction", help = "% of dataset to be used for training")
+  protected double trainingFraction;
+
   private boolean useTrainingFraction;
+
+  @TrainerParam(name = "label", help = "Name of column which is used as a training label for supervised learning")
   protected String label;
+
+  @TrainerParam(name = "partition", help = "Partition filter used to create create HCatInputFormats")
   protected String partitionFilter;
+
+  @TrainerParam(name = "feature", help = "Column name(s) which are to be used as sample features")
   protected List<String> features;
 
   public BaseSparkTrainer(String name, String description) {
@@ -150,6 +161,17 @@ public abstract class BaseSparkTrainer implements MLTrainer {
 
   public String getDescription() {
     return description;
+  }
+
+  public Map<String, String> getArgUsage() {
+    Map<String, String> usage = new LinkedHashMap<String, String>();
+    for (Field field : this.getClass().getDeclaredFields()) {
+      TrainerParam paramAnnotation = field.getAnnotation(TrainerParam.class);
+      if (paramAnnotation != null) {
+        usage.put(paramAnnotation.name(), paramAnnotation.help());
+      }
+    }
+    return usage;
   }
 
   public abstract void parseTrainerParams(Map<String, String> params);

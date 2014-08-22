@@ -4,6 +4,7 @@ import com.inmobi.grill.api.GrillException;
 import com.inmobi.grill.ml.spark.models.BaseSparkClassificationModel;
 import com.inmobi.grill.ml.spark.models.NaiveBayesClassificationModel;
 import com.inmobi.grill.server.api.ml.Algorithm;
+import com.inmobi.grill.server.api.ml.TrainerParam;
 import org.apache.spark.mllib.classification.NaiveBayes;
 import org.apache.spark.mllib.regression.LabeledPoint;
 import org.apache.spark.rdd.RDD;
@@ -15,6 +16,7 @@ import java.util.Map;
   description = "Spark Naive Bayes classifier trainer"
 )
 public class NaiveBayesTrainer extends BaseSparkTrainer {
+  @TrainerParam(name = "lambda", help = "Lambda parameter for naive bayes learner")
   private double lambda = 1.0;
 
   public NaiveBayesTrainer(String name, String description) {

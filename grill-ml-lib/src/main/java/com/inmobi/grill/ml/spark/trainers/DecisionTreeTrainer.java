@@ -5,6 +5,7 @@ import com.inmobi.grill.ml.spark.models.BaseSparkClassificationModel;
 import com.inmobi.grill.ml.spark.models.DecisionTreeClassificationModel;
 import com.inmobi.grill.ml.spark.models.SparkDecisionTreeModel;
 import com.inmobi.grill.server.api.ml.Algorithm;
+import com.inmobi.grill.server.api.ml.TrainerParam;
 import org.apache.spark.mllib.regression.LabeledPoint;
 import org.apache.spark.mllib.tree.DecisionTree$;
 import org.apache.spark.mllib.tree.configuration.Algo$;
@@ -23,8 +24,17 @@ import java.util.Map;
   description = "Spark Decision Tree classifier trainer"
 )
 public class DecisionTreeTrainer extends BaseSparkTrainer {
+  @TrainerParam(name = "algo",
+   help = "Decision tree algorithm. Allowed values are 'classification' and 'regression'")
   private Enumeration.Value algo;
+
+  @TrainerParam(name = "impurity",
+    help = "Impurity measure used by the decision tree. " +
+      "Allowed values are 'gini', 'entropy' and 'variance'")
   private Impurity decisionTreeImpurity;
+
+  @TrainerParam(name = "maxDepth",
+    help = "Max depth of the decision tree. Integer values expected.")
   private int maxDepth;
 
   public DecisionTreeTrainer(String name, String description) {

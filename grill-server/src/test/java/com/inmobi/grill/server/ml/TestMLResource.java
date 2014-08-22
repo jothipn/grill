@@ -149,6 +149,17 @@ public class TestMLResource extends GrillJerseyTest {
   }
 
   @Test
+  public void testTrainerParamDesc() throws Exception {
+    StringList trainers = target("ml").path("trainers").request().get(StringList.class);
+    for (String trainer : trainers.getElements()) {
+      StringList descrs =
+        target("ml").path("trainers").path(trainer).request(MediaType.APPLICATION_XML).get(StringList.class);
+      System.out.println(trainer + " @@ Desc " + descrs.getElements());
+      assertNotNull(descrs);
+    }
+  }
+
+  @Test
   public void testTrain() throws Exception {
     final String algo = "spark_naive_bayes";
     WebTarget target = target("ml").path(algo).path("train");

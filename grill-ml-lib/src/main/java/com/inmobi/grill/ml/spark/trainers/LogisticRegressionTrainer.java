@@ -4,6 +4,7 @@ import com.inmobi.grill.api.GrillException;
 import com.inmobi.grill.ml.spark.models.BaseSparkClassificationModel;
 import com.inmobi.grill.ml.spark.models.LogitRegressionClassificationModel;
 import com.inmobi.grill.server.api.ml.Algorithm;
+import com.inmobi.grill.server.api.ml.TrainerParam;
 import org.apache.spark.mllib.classification.LogisticRegressionModel;
 import org.apache.spark.mllib.classification.LogisticRegressionWithSGD;
 import org.apache.spark.mllib.regression.LabeledPoint;
@@ -16,8 +17,13 @@ import java.util.Map;
   description = "Spark logistic regression trainer"
 )
 public class LogisticRegressionTrainer extends BaseSparkTrainer {
+  @TrainerParam(name = "iterations", help ="Max number of iterations")
   private int iterations;
+
+  @TrainerParam(name = "stepSize", help = "Step size")
   private double stepSize;
+
+  @TrainerParam(name = "minBatchFraction", help = "Fraction for batched learning")
   private double minBatchFraction;
 
   public LogisticRegressionTrainer(String name, String description) {

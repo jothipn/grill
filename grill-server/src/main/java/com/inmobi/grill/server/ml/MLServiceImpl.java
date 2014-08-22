@@ -109,8 +109,8 @@ public class MLServiceImpl extends GrillService implements MLService {
   }
 
   @Override
-  public LabelledPrediction predict(String algorithm, String modelID, Object[] features) throws GrillException {
-    return null;
+  public Object predict(String algorithm, String modelID, Object[] features) throws GrillException {
+    return mlHandler.predict(algorithm, modelID, features);
   }
 
   @Override
@@ -165,6 +165,15 @@ public class MLServiceImpl extends GrillService implements MLService {
       }
 
       return testQueryHandle;
+    }
+  }
+
+  @Override
+  public Map<String, String> getAlgoParamDescription(String algorithm) {
+    try {
+      return mlHandler.getAlgoParamDescription(algorithm);
+    } catch (GrillException e) {
+      return null;
     }
   }
 }

@@ -1,5 +1,7 @@
 package com.inmobi.grill.ml;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.inmobi.grill.server.api.ml.MLModel;
 import com.inmobi.grill.server.api.ml.MLTestReport;
 import org.apache.commons.io.IOUtils;
@@ -13,8 +15,9 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Load ML models from a FS location
@@ -26,7 +29,14 @@ public class ModelLoader {
   public static final Log LOG = LogFactory.getLog(ModelLoader.class);
   public static final String TEST_REPORT_BASE_DIR = "grill.ml.test.basedir";
   public static final String TEST_REPORT_BASE_DIR_DEFAULT = "file:///tmp/ml_reports";
-  private static Map<Path, MLModel> modelCache = new HashMap<Path, MLModel>();
+
+  // Model cache settings
+  public static final long MODEL_CACHE_SIZE = 10;
+  public static final long MODEL_CACHE_TIMEOUT =  3600000L;// one hour
+  private static Cache<Path, MLModel> modelCache = CacheBuilder.newBuilder()
+    .maximumSize(MODEL_CACHE_SIZE)
+    .expireAfterAccess(MODEL_CACHE_TIMEOUT, TimeUnit.MILLISECONDS)
+    .build();
 
   public static Path getModelLocation(Configuration conf, String algorithm, String modelID) {
     String modelDataBaseDir = conf.get(MODEL_PATH_BASE_DIR, MODEL_PATH_BASE_DIR_DEFAULT);
@@ -37,35 +47,36 @@ public class ModelLoader {
   public static MLModel loadModel(Configuration conf, String algorithm, String modelID) throws IOException {
     LOG.info("Loading model algorithm: " + algorithm + " modelID: " + modelID);
 
-    Path modelPath = getModelLocation(conf, algorithm, modelID);
-
-    if (modelCache.containsKey(modelPath)) {
-      return modelCache.get(modelPath);
-    }
-
-    FileSystem fs = modelPath.getFileSystem(new HiveConf());
-
-    if (!fs.exists(modelPath)) {
-      return null;
-    }
-
-    ObjectInputStream ois = null;
-
+    final Path modelPath = getModelLocation(conf, algorithm, modelID);
     try {
-      ois = new ObjectInputStream(fs.open(modelPath));
-      MLModel model = (MLModel) ois.readObject();
-      modelCache.put(modelPath, model);
-      LOG.info("Loaded model " + model.getId() + " from location " + modelPath);
-      return model;
-    } catch (ClassNotFoundException e) {
-      throw new IOException(e);
-    } finally {
-      IOUtils.closeQuietly(ois);
+      return modelCache.get(modelPath, new Callable<MLModel>() {
+        @Override
+        public MLModel call() throws Exception {
+          FileSystem fs = modelPath.getFileSystem(new HiveConf());
+          if (!fs.exists(modelPath)) {
+            throw new IOException("Model path not found " + modelPath.toString());
+          }
+
+          ObjectInputStream ois = null;
+          try {
+            ois = new ObjectInputStream(fs.open(modelPath));
+            MLModel model = (MLModel) ois.readObject();
+            LOG.info("Loaded model " + model.getId() + " from location " + modelPath);
+            return model;
+          } catch (ClassNotFoundException e) {
+            throw new IOException(e);
+          } finally {
+            IOUtils.closeQuietly(ois);
+          }
+        }
+      });
+    } catch (ExecutionException exc) {
+      throw new IOException(exc);
     }
   }
 
   public static void clearCache() {
-    modelCache.clear();
+    modelCache.cleanUp();
   }
 
   public static Path getTestReportPath(Configuration conf, String algorithm, String report) {

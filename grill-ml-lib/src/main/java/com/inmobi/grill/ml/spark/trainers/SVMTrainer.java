@@ -4,6 +4,7 @@ import com.inmobi.grill.api.GrillException;
 import com.inmobi.grill.ml.spark.models.BaseSparkClassificationModel;
 import com.inmobi.grill.ml.spark.models.SVMClassificationModel;
 import com.inmobi.grill.server.api.ml.Algorithm;
+import com.inmobi.grill.server.api.ml.TrainerParam;
 import org.apache.spark.mllib.classification.SVMModel;
 import org.apache.spark.mllib.classification.SVMWithSGD;
 import org.apache.spark.mllib.regression.LabeledPoint;
@@ -16,9 +17,16 @@ import java.util.Map;
   description = "Spark SVML classifier trainer"
 )
 public class SVMTrainer extends BaseSparkTrainer {
+  @TrainerParam(name = "minBatchFraction", help = "Fraction for batched learning")
   private double minBatchFraction;
+
+  @TrainerParam(name = "regParam", help = "regularization parameter for gradient descent")
   private double regParam;
+
+  @TrainerParam(name = "stepSize", help = "Iteration step size")
   private double stepSize;
+
+  @TrainerParam(name = "iterations", help = "Number of iterations")
   private int iterations;
 
   public SVMTrainer(String name, String description) {

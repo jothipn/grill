@@ -4,6 +4,8 @@ import com.inmobi.grill.api.GrillSessionHandle;
 import com.inmobi.grill.api.StringList;
 import com.inmobi.grill.api.ml.ModelMetadata;
 import com.inmobi.grill.api.ml.TestReport;
+import com.inmobi.grill.ml.HiveMLUDF;
+import com.inmobi.grill.ml.ModelLoader;
 import com.inmobi.grill.server.GrillJerseyTest;
 import com.inmobi.grill.server.GrillServices;
 import com.inmobi.grill.server.api.ml.MLModel;
@@ -52,7 +54,7 @@ public class TestMLResource extends GrillJerseyTest {
   private transient ThriftCLIServiceClient hiveClient;
   private transient SessionHandle session;
   private transient Map<String, String> confOverlay = new HashMap<String, String>();
-  private transient GrillMLHandler mlService;
+  private transient MLServiceImpl mlService;
 
   @BeforeTest
   public void setUp() throws Exception {
@@ -211,7 +213,7 @@ public class TestMLResource extends GrillJerseyTest {
 
     // Run a test
     LOG.info("@@ Begin test model " + modelID);
-    mlService = (GrillMLHandler) GrillServices.get().getService(MLService.NAME);
+    mlService = (MLServiceImpl) GrillServices.get().getService(MLService.NAME);
     GrillSessionHandle session =  mlService.openSession("foo", "bar", confOverlay);
 
     WebTarget modelTestTarget =
@@ -226,7 +228,7 @@ public class TestMLResource extends GrillJerseyTest {
 
 
     // Assert table is created
-    HiveConf serviceConf = mlService.getConf();
+    HiveConf serviceConf = mlService.getHiveConf();
     Hive metastoreClient = Hive.get(serviceConf);
     Table testOutputTable = metastoreClient.getTable("default", "ml_test_" + testReportID);
     assertNotNull(testOutputTable);
@@ -242,11 +244,11 @@ public class TestMLResource extends GrillJerseyTest {
     assertTrue(testColumns.containsAll(model.getFeatureColumns()));
 
     // Test if the report was saved
-    Path reportPath = ModelLoader.getTestReportPath(mlService.getConf(), algo, testReportID);
-    FileSystem fs = reportPath.getFileSystem(mlService.getConf());
+    Path reportPath = ModelLoader.getTestReportPath(mlService.getHiveConf(), algo, testReportID);
+    FileSystem fs = reportPath.getFileSystem(mlService.getHiveConf());
     assertTrue(fs.exists(reportPath));
 
-    MLTestReport report = ModelLoader.loadReport(mlService.getConf(), algo, testReportID);
+    MLTestReport report = ModelLoader.loadReport(mlService.getHiveConf(), algo, testReportID);
     assertNotNull(report);
     assertEquals(report.getReportID(), testReportID);
     assertEquals(report.getAlgorithm(), algo);

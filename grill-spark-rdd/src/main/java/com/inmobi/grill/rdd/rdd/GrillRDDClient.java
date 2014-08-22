@@ -4,7 +4,7 @@ import com.inmobi.grill.api.GrillException;
 import com.inmobi.grill.api.query.*;
 import com.inmobi.grill.client.GrillClient;
 import com.inmobi.grill.client.GrillClientResultSet;
-import com.inmobi.grill.server.ml.spark.HiveTableRDD;
+import com.inmobi.grill.ml.spark.HiveTableRDD;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.conf.HiveConf;

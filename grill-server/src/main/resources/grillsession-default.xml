@@ -171,7 +171,7 @@
 
 <property>
     <name>grill.ml.service.impl</name>
-    <value>com.inmobi.grill.server.ml.GrillMLHandler</value>
+    <value>com.inmobi.grill.server.ml.GrillML</value>
     <description>Implementation class for Machine Learning service</description>
 </property>
 

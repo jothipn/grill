@@ -26,7 +26,6 @@ import java.net.URI;
 
 import javax.ws.rs.core.UriBuilder;
 
-import com.inmobi.grill.server.ml.ModelLoader;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.glassfish.jersey.test.JerseyTest;
 import org.testng.annotations.AfterSuite;

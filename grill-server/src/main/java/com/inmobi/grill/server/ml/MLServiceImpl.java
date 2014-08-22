@@ -6,28 +6,24 @@ import com.inmobi.grill.api.GrillSessionHandle;
 import com.inmobi.grill.api.query.GrillQuery;
 import com.inmobi.grill.api.query.QueryHandle;
 import com.inmobi.grill.api.query.QueryStatus;
+import com.inmobi.grill.ml.GrillML;
+import com.inmobi.grill.ml.ModelLoader;
+import com.inmobi.grill.ml.TestQueryRunner;
 import com.inmobi.grill.server.GrillService;
 import com.inmobi.grill.server.GrillServices;
 import com.inmobi.grill.server.api.GrillConfConstants;
 import com.inmobi.grill.server.api.ml.*;
 import com.inmobi.grill.server.api.query.QueryExecutionService;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hive.service.cli.CLIService;
 
-import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.util.*;
 
 public class MLServiceImpl extends GrillService implements MLService {
-  public static final Log LOG = LogFactory.getLog(GrillMLHandler.class);
-  private GrillMLHandler mlHandler;
+  public static final Log LOG = LogFactory.getLog(GrillML.class);
+  private GrillML mlHandler;
 
   public MLServiceImpl(String name, CLIService cliService) {
     super(NAME, cliService);
@@ -64,7 +60,7 @@ public class MLServiceImpl extends GrillService implements MLService {
 
   @Override
   public synchronized void init(HiveConf hiveConf) {
-    mlHandler = new GrillMLHandler(hiveConf);
+    mlHandler = new GrillML(hiveConf);
     mlHandler.init(hiveConf);
     super.init(hiveConf);
     LOG.info("Inited ML service");
@@ -155,7 +151,7 @@ public class MLServiceImpl extends GrillService implements MLService {
       LOG.info("Submitted query " + testQueryHandle.getHandleId());
       while (!query.getStatus().isFinished()) {
         try {
-          Thread.sleep(1000);
+          Thread.sleep(500);
         } catch (InterruptedException e) {
           throw new GrillException(e);
         }

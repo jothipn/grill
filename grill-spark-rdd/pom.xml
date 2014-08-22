@@ -22,7 +22,7 @@
         </dependency>
         <dependency>
             <groupId>com.inmobi.grill</groupId>
-            <artifactId>grill-spark-lib</artifactId>
+            <artifactId>grill-ml-lib</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

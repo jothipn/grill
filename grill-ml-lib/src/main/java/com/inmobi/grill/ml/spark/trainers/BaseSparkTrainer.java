@@ -63,7 +63,8 @@ public abstract class BaseSparkTrainer implements MLTrainer {
   }
 
   @Override
-  public MLModel train(Configuration conf, String db, String table, String modelId, String... params) throws GrillException {
+  public MLModel train(Configuration conf, String db, String table, String modelId, String... params)
+    throws GrillException {
     parseParams(params);
     LOG.info("Training " + " with " + features.size() + " features");
     TableTrainingSpec.TableTrainingSpecBuilder builder =
@@ -109,14 +110,6 @@ public abstract class BaseSparkTrainer implements MLTrainer {
       } else {
         params.put(args[i].replaceAll("\\-+", ""), args[i + 1]);
       }
-    }
-
-    if (StringUtils.isBlank(label)) {
-      throw new IllegalArgumentException("Label column not provided");
-    }
-
-    if (features == null || features.isEmpty()) {
-      throw new IllegalArgumentException("At least one feature column is required");
     }
 
     if (params.containsKey("trainingFraction")) {
@@ -176,7 +169,7 @@ public abstract class BaseSparkTrainer implements MLTrainer {
     }
 
     // Get all trainer params including base trainer params
-    while (true) {
+    while (clz != null) {
       for (Field field : clz.getDeclaredFields()) {
         TrainerParam param = field.getAnnotation(TrainerParam.class);
         if (param != null) {

@@ -38,14 +38,8 @@ public class KMeansTrainer implements MLTrainer {
   private transient Configuration conf;
   private JavaSparkContext sparkContext;
 
-  @TrainerParam(name = "table", help = "Name of HCatalog table containing input data")
-  private String table;
-
-  @TrainerParam(name = "db", help = "Name of HCatalog database containing the input table")
-  private String db;
-
   @TrainerParam(name = "partition", help = "Partition filter to be used while constructing table RDD")
-  private String partFilter;
+  private String partFilter = null;
 
   @TrainerParam(name = "k", help = "Number of cluster")
   private int k;
@@ -109,7 +103,7 @@ public class KMeansTrainer implements MLTrainer {
           HCatRecord hCatRecord = v1._2();
           double arr[] = new double[NUM_FEATURES];
           for (int i = 0; i < NUM_FEATURES; i++) {
-            Object val = (Double) hCatRecord.get(featurePositions[i]);
+            Object val =  hCatRecord.get(featurePositions[i]);
             arr[i] = val == null ? 0d : (Double) val;
           }
           return Vectors.dense(arr);

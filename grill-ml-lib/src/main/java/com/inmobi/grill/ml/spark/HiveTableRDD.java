@@ -30,6 +30,4 @@ public class HiveTableRDD {
 
     return rdd;
   }
-
-
 }

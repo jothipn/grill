@@ -17,13 +17,15 @@ import java.util.Map;
   description = "Spark logistic regression trainer"
 )
 public class LogisticRegressionTrainer extends BaseSparkTrainer {
-  @TrainerParam(name = "iterations", help ="Max number of iterations")
+  @TrainerParam(name = "iterations", help ="Max number of iterations",
+  defaultValue = "100")
   private int iterations;
 
-  @TrainerParam(name = "stepSize", help = "Step size")
+  @TrainerParam(name = "stepSize", help = "Step size", defaultValue = "1.0d")
   private double stepSize;
 
-  @TrainerParam(name = "minBatchFraction", help = "Fraction for batched learning")
+  @TrainerParam(name = "minBatchFraction", help = "Fraction for batched learning",
+  defaultValue = "1.0d")
   private double minBatchFraction;
 
   public LogisticRegressionTrainer(String name, String description) {

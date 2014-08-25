@@ -17,16 +17,19 @@ import java.util.Map;
   description = "Spark SVML classifier trainer"
 )
 public class SVMTrainer extends BaseSparkTrainer {
-  @TrainerParam(name = "minBatchFraction", help = "Fraction for batched learning")
+  @TrainerParam(name = "minBatchFraction", help = "Fraction for batched learning",
+  defaultValue = "1.0d")
   private double minBatchFraction;
 
-  @TrainerParam(name = "regParam", help = "regularization parameter for gradient descent")
+  @TrainerParam(name = "regParam", help = "regularization parameter for gradient descent",
+  defaultValue = "1.0d")
   private double regParam;
 
-  @TrainerParam(name = "stepSize", help = "Iteration step size")
+  @TrainerParam(name = "stepSize", help = "Iteration step size", defaultValue = "1.0d")
   private double stepSize;
 
-  @TrainerParam(name = "iterations", help = "Number of iterations")
+  @TrainerParam(name = "iterations", help = "Number of iterations",
+  defaultValue = "100")
   private int iterations;
 
   public SVMTrainer(String name, String description) {

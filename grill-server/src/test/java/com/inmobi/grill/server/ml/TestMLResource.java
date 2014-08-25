@@ -154,7 +154,8 @@ public class TestMLResource extends GrillJerseyTest {
     for (String trainer : trainers.getElements()) {
       StringList descrs =
         target("ml").path("trainers").path(trainer).request(MediaType.APPLICATION_XML).get(StringList.class);
-      System.out.println(trainer + " @@ Desc " + descrs.getElements());
+      System.out.println(trainer + " @@ Desc " +
+        StringUtils.join(descrs.getElements(), '\n'));
       assertNotNull(descrs);
     }
   }

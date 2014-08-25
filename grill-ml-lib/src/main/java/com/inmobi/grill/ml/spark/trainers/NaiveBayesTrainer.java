@@ -16,7 +16,8 @@ import java.util.Map;
   description = "Spark Naive Bayes classifier trainer"
 )
 public class NaiveBayesTrainer extends BaseSparkTrainer {
-  @TrainerParam(name = "lambda", help = "Lambda parameter for naive bayes learner")
+  @TrainerParam(name = "lambda", help = "Lambda parameter for naive bayes learner",
+  defaultValue = "1.0d")
   private double lambda = 1.0;
 
   public NaiveBayesTrainer(String name, String description) {

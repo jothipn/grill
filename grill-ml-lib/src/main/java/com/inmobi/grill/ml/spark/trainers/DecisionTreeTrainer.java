@@ -34,7 +34,8 @@ public class DecisionTreeTrainer extends BaseSparkTrainer {
   private Impurity decisionTreeImpurity;
 
   @TrainerParam(name = "maxDepth",
-    help = "Max depth of the decision tree. Integer values expected.")
+    help = "Max depth of the decision tree. Integer values expected.",
+    defaultValue = "100")
   private int maxDepth;
 
   public DecisionTreeTrainer(String name, String description) {

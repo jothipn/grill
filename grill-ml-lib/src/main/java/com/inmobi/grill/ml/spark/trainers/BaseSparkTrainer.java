@@ -3,6 +3,7 @@ package com.inmobi.grill.ml.spark.trainers;
 import com.inmobi.grill.api.GrillException;
 import com.inmobi.grill.ml.spark.TableTrainingSpec;
 import com.inmobi.grill.ml.spark.models.BaseSparkClassificationModel;
+import com.inmobi.grill.server.api.ml.Algorithm;
 import com.inmobi.grill.server.api.ml.MLModel;
 import com.inmobi.grill.server.api.ml.MLTrainer;
 import com.inmobi.grill.server.api.ml.TrainerParam;
@@ -28,7 +29,8 @@ public abstract class BaseSparkTrainer implements MLTrainer {
   protected Map<String, String> params;
   protected transient HiveConf conf;
 
-  @TrainerParam(name = "trainingFraction", help = "% of dataset to be used for training")
+  @TrainerParam(name = "trainingFraction", help = "% of dataset to be used for training",
+  defaultValue = "0")
   protected double trainingFraction;
 
   private boolean useTrainingFraction;
@@ -165,11 +167,28 @@ public abstract class BaseSparkTrainer implements MLTrainer {
 
   public Map<String, String> getArgUsage() {
     Map<String, String> usage = new LinkedHashMap<String, String>();
-    for (Field field : this.getClass().getDeclaredFields()) {
-      TrainerParam paramAnnotation = field.getAnnotation(TrainerParam.class);
-      if (paramAnnotation != null) {
-        usage.put(paramAnnotation.name(), paramAnnotation.help());
+    Class<?> clz = this.getClass();
+    // Put class name and description as well as part of the usage
+    Algorithm algorithm = clz.getAnnotation(Algorithm.class);
+    if (algorithm != null) {
+      usage.put("Algorithm Name", algorithm.name());
+      usage.put("Algorithm Description", algorithm.description());
+    }
+
+    // Get all trainer params including base trainer params
+    while (true) {
+      for (Field field : clz.getDeclaredFields()) {
+        TrainerParam param = field.getAnnotation(TrainerParam.class);
+        if (param != null) {
+          usage.put("[param] " + param.name(), param.help() + " Default Value = "
+            + param.defaultValue());
+        }
       }
+
+      if (clz.equals(BaseSparkTrainer.class)) {
+        break;
+      }
+      clz = clz.getSuperclass();
     }
     return usage;
   }

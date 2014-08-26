@@ -50,9 +50,9 @@ public class TrainerArgParser {
           Field f = fieldMap.get(key);
           if (String.class.equals(f.getType())) {
             f.set(trainer, value);
-          } else if (Integer.class.equals(f.getType())) {
+          } else if (Integer.TYPE.equals(f.getType())) {
             f.setInt(trainer, Integer.parseInt(value));
-          } else if (Double.class.equals(f.getType())) {
+          } else if (Double.TYPE.equals(f.getType())) {
             f.setDouble(trainer, Double.parseDouble(value));
           } else {
             // check if the trainer provides a deserializer for this param

@@ -1,6 +1,6 @@
 package com.inmobi.grill.ml.spark.models;
 
-import com.inmobi.grill.server.api.ml.MLModel;
+import com.inmobi.grill.ml.MLModel;
 import org.apache.spark.mllib.clustering.KMeansModel;
 import org.apache.spark.mllib.linalg.Vectors;
 

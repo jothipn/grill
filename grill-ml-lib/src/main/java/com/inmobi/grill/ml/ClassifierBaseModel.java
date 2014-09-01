@@ -1,10 +1,6 @@
 package com.inmobi.grill.ml;
 
 
-import com.inmobi.grill.server.api.ml.MLModel;
-
-import java.util.List;
-
 /**
  * Return a single double value as a prediction. This is useful in classifiers where the classifier
  * returns a single class label as a prediction.

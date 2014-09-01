@@ -1,4 +1,4 @@
-package com.inmobi.grill.server.api.ml;
+package com.inmobi.grill.ml;
 
 public interface MLTestMetric {
   public String getName();

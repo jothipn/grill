@@ -1,4 +1,4 @@
-package com.inmobi.grill.server.api.ml;
+package com.inmobi.grill.ml;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

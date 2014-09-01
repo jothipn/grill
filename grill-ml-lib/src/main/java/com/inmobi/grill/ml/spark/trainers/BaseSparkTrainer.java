@@ -1,16 +1,15 @@
 package com.inmobi.grill.ml.spark.trainers;
 
+import com.inmobi.grill.api.GrillConf;
 import com.inmobi.grill.api.GrillException;
 import com.inmobi.grill.ml.spark.TableTrainingSpec;
 import com.inmobi.grill.ml.spark.models.BaseSparkClassificationModel;
-import com.inmobi.grill.server.api.ml.Algorithm;
-import com.inmobi.grill.server.api.ml.MLModel;
-import com.inmobi.grill.server.api.ml.MLTrainer;
-import com.inmobi.grill.server.api.ml.TrainerParam;
-import org.apache.commons.lang3.StringUtils;
+import com.inmobi.grill.ml.Algorithm;
+import com.inmobi.grill.ml.MLModel;
+import com.inmobi.grill.ml.MLTrainer;
+import com.inmobi.grill.ml.TrainerParam;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.mllib.regression.LabeledPoint;
@@ -27,7 +26,7 @@ public abstract class BaseSparkTrainer implements MLTrainer {
 
   protected JavaSparkContext sparkContext;
   protected Map<String, String> params;
-  protected transient HiveConf conf;
+  protected transient GrillConf conf;
 
   @TrainerParam(name = "trainingFraction", help = "% of dataset to be used for training",
   defaultValue = "0")
@@ -53,23 +52,24 @@ public abstract class BaseSparkTrainer implements MLTrainer {
   }
 
   @Override
-  public HiveConf getConf() {
+  public GrillConf getConf() {
     return conf;
   }
 
   @Override
-  public void configure(Configuration configuration) {
-    this.conf = new HiveConf(configuration, BaseSparkTrainer.class);
+  public void configure(GrillConf configuration) {
+    this.conf = configuration;
   }
 
+
   @Override
-  public MLModel train(Configuration conf, String db, String table, String modelId, String... params)
+  public MLModel train(GrillConf conf, String db, String table, String modelId, String... params)
     throws GrillException {
     parseParams(params);
     LOG.info("Training " + " with " + features.size() + " features");
     TableTrainingSpec.TableTrainingSpecBuilder builder =
       TableTrainingSpec.newBuilder()
-        .hiveConf(new HiveConf(conf, BaseSparkTrainer.class))
+        .hiveConf(toHiveConf(conf))
         .database(db)
         .table(table)
         .partitionFilter(partitionFilter)
@@ -90,6 +90,10 @@ public abstract class BaseSparkTrainer implements MLTrainer {
     model.setLabelColumn(label);
     model.setFeatureColumns(features);
     return model;
+  }
+
+  protected HiveConf toHiveConf(GrillConf conf) {
+    return null;
   }
 
   public void parseParams(String[] args) {

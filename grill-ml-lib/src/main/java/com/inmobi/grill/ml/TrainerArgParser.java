@@ -1,7 +1,5 @@
 package com.inmobi.grill.ml;
 
-import com.inmobi.grill.server.api.ml.MLTrainer;
-import com.inmobi.grill.server.api.ml.TrainerParam;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -54,10 +52,12 @@ public class TrainerArgParser {
             f.setInt(trainer, Integer.parseInt(value));
           } else if (Double.TYPE.equals(f.getType())) {
             f.setDouble(trainer, Double.parseDouble(value));
+          } else if (Long.TYPE.equals(f.getType())) {
+            f.setLong(trainer, Long.parseLong(value));
           } else {
             // check if the trainer provides a deserializer for this param
-            String customParserClass = trainer.getConf().get("grill.ml.args."
-            + key);
+            String customParserClass = trainer.getConf()
+              .getProperties().get("grill.ml.args."+ key);
             if (customParserClass != null) {
               Class<? extends CustomArgParser<?>> clz =
                 (Class<? extends CustomArgParser<?>>) Class.forName(customParserClass);

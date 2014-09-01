@@ -2,8 +2,6 @@ package com.inmobi.grill.ml;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.inmobi.grill.server.api.ml.MLModel;
-import com.inmobi.grill.server.api.ml.MLTestReport;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

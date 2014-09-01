@@ -1,10 +1,11 @@
 package com.inmobi.grill.ml.spark;
 
+import com.inmobi.grill.api.GrillConf;
 import com.inmobi.grill.api.GrillException;
 import com.inmobi.grill.ml.Algorithms;
 import com.inmobi.grill.ml.spark.trainers.*;
-import com.inmobi.grill.server.api.ml.MLDriver;
-import com.inmobi.grill.server.api.ml.MLTrainer;
+import com.inmobi.grill.ml.MLDriver;
+import com.inmobi.grill.ml.MLTrainer;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -75,13 +76,14 @@ public class SparkMLDriver implements MLDriver {
   }
 
   @Override
-  public void init(Configuration conf) throws GrillException {
+  public void init(GrillConf conf) throws GrillException {
     sparkConf = new SparkConf();
     registerTrainers();
-
-    Map<String, String> sparkDriverConf = conf.getValByRegex("grill\\.ml\\.sparkdriver\\..*");
-    for (String key : sparkDriverConf.keySet()) {
-      sparkConf.set(key.substring("grill.ml.sparkdriver.".length()), sparkDriverConf.get(key));
+    for (String key : conf.getProperties().keySet()) {
+      if (key.startsWith("grill.ml.sparkdriver.")) {
+        sparkConf.set(key.substring("grill.ml.sparkdriver.".length()),
+          conf.getProperties().get(key));
+      }
     }
 
     String sparkHome = System.getenv("SPARK_HOME");

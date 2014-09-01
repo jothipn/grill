@@ -1,4 +1,4 @@
-package com.inmobi.grill.server.api.ml;
+package com.inmobi.grill.ml;
 
 /**
  * Prediction type used when the model prediction is of complex types. For example,

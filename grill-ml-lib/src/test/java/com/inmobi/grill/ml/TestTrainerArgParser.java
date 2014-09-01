@@ -1,7 +1,6 @@
 package com.inmobi.grill.ml;
 
 import com.inmobi.grill.ml.spark.trainers.KMeansTrainer;
-import com.inmobi.grill.server.api.ml.MLTrainer;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Field;

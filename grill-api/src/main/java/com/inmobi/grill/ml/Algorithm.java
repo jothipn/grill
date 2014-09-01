@@ -1,4 +1,4 @@
-package com.inmobi.grill.server.api.ml;
+package com.inmobi.grill.ml;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -6,9 +6,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-public @interface TrainerParam {
+@Target(ElementType.TYPE)
+public @interface Algorithm {
   String name();
-  String help();
-  String defaultValue() default "None";
+  String description();
 }

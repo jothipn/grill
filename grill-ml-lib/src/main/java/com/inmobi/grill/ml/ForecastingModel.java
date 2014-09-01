@@ -1,10 +1,6 @@
 package com.inmobi.grill.ml;
 
 
-import com.inmobi.grill.server.api.ml.LabelledPrediction;
-import com.inmobi.grill.server.api.ml.MLModel;
-import com.inmobi.grill.server.api.ml.MultiPrediction;
-
 import java.util.List;
 
 public class ForecastingModel extends MLModel<MultiPrediction> {

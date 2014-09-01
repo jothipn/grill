@@ -1,14 +1,10 @@
 package com.inmobi.grill.ml.spark.trainers;
 
+import com.inmobi.grill.api.GrillConf;
 import com.inmobi.grill.api.GrillException;
-import com.inmobi.grill.ml.TrainerArgParser;
+import com.inmobi.grill.ml.*;
 import com.inmobi.grill.ml.spark.HiveTableRDD;
 import com.inmobi.grill.ml.spark.models.KMeansClusteringModel;
-import com.inmobi.grill.server.api.ml.Algorithm;
-import com.inmobi.grill.server.api.ml.MLModel;
-import com.inmobi.grill.server.api.ml.MLTrainer;
-import com.inmobi.grill.server.api.ml.TrainerParam;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.ql.metadata.Hive;
@@ -25,17 +21,14 @@ import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.Vectors;
 import scala.Tuple2;
 
-import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Algorithm(
   name = "spark_kmeans_trainer",
   description = "Spark MLLib KMeans trainer"
 )
 public class KMeansTrainer implements MLTrainer {
-  private transient Configuration conf;
+  private transient GrillConf conf;
   private JavaSparkContext sparkContext;
 
   @TrainerParam(name = "partition", help = "Partition filter to be used while constructing table RDD")
@@ -67,17 +60,17 @@ public class KMeansTrainer implements MLTrainer {
   }
 
   @Override
-  public void configure(Configuration configuration) {
-    this.conf = conf;
+  public void configure(GrillConf configuration) {
+    this.conf = configuration;
   }
 
   @Override
-  public Configuration getConf() {
+  public GrillConf getConf() {
     return conf;
   }
 
   @Override
-  public MLModel train(Configuration conf, String db, String table, String modelId, String... params)
+  public MLModel train(GrillConf conf, String db, String table, String modelId, String... params)
     throws GrillException {
     List<String> features = TrainerArgParser.parseArgs(this, params);
     final int featurePositions[] = new int[features.size()];
@@ -86,7 +79,7 @@ public class KMeansTrainer implements MLTrainer {
     JavaPairRDD<WritableComparable, HCatRecord> rdd = null;
     try {
       // Map feature names to positions
-      Table tbl = Hive.get(new HiveConf(conf, this.getClass())).getTable(db, table);
+      Table tbl = Hive.get(toHiveConf(conf)).getTable(db, table);
       List<FieldSchema> allCols = tbl.getAllCols();
       int f = 0;
       for (int i = 0; i < tbl.getAllCols().size(); i++) {
@@ -96,7 +89,8 @@ public class KMeansTrainer implements MLTrainer {
         }
       }
 
-      rdd = HiveTableRDD.createHiveTableRDD(sparkContext, conf, db, table, partFilter);
+      rdd = HiveTableRDD.createHiveTableRDD(sparkContext,
+        toHiveConf(conf), db, table, partFilter);
       JavaRDD<Vector> trainableRDD = rdd.map(new Function<Tuple2<WritableComparable, HCatRecord>, Vector>() {
         @Override
         public Vector call(Tuple2<WritableComparable, HCatRecord> v1) throws Exception {
@@ -116,5 +110,9 @@ public class KMeansTrainer implements MLTrainer {
     } catch (Exception e) {
       throw new GrillException("KMeans trainer failed for " + db + "." + table, e);
     }
+  }
+
+  private HiveConf toHiveConf(GrillConf conf) {
+    return null;
   }
 }

@@ -1,8 +1,6 @@
 package com.inmobi.grill.ml;
 
 import com.inmobi.grill.api.GrillException;
-import com.inmobi.grill.server.api.ml.Algorithm;
-import com.inmobi.grill.server.api.ml.MLTrainer;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;

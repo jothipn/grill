@@ -1,7 +1,6 @@
 package com.inmobi.grill.ml;
 
 
-import com.inmobi.grill.server.api.ml.MLModel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.ql.exec.Description;

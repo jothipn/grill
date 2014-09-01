@@ -1,4 +1,4 @@
-package com.inmobi.grill.server.api.ml;
+package com.inmobi.grill.ml;
 
 import com.inmobi.grill.api.GrillException;
 import com.inmobi.grill.api.GrillSessionHandle;
@@ -6,7 +6,7 @@ import com.inmobi.grill.api.GrillSessionHandle;
 import java.util.List;
 import java.util.Map;
 
-public interface MLService {
+public interface GrillML {
   public static final String NAME = "ml";
   public List<String> getAlgorithms();
   public Map<String, String> getAlgoParamDescription(String algorithm);
@@ -22,3 +22,4 @@ public interface MLService {
   public void deleteModel(String algorithm, String modelID) throws GrillException;
   public void deleteTestReport(String algorithm, String reportID) throws GrillException;
 }
+

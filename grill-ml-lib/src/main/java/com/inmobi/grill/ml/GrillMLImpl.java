@@ -9,7 +9,6 @@ import com.inmobi.grill.api.query.QueryStatus;
 import com.inmobi.grill.ml.spark.SparkMLDriver;
 import com.inmobi.grill.ml.spark.trainers.BaseSparkTrainer;
 import com.inmobi.grill.server.api.GrillConfConstants;
-import com.inmobi.grill.server.api.ml.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -29,18 +28,17 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.*;
 
-public class GrillML {
-  public static final Log LOG = LogFactory.getLog(GrillML.class);
+public class GrillMLImpl implements GrillML {
+  public static final Log LOG = LogFactory.getLog(GrillMLImpl.class);
   protected List<MLDriver> drivers;
   private HiveConf conf;
   private JavaSparkContext sparkContext;
 
-  public GrillML(HiveConf conf) {
+  public GrillMLImpl(HiveConf conf) {
     this.conf = conf;
   }
 
@@ -88,7 +86,8 @@ public class GrillML {
       database = "default";
     }
 
-    MLModel model = trainer.train(getHiveConf(), database, table, modelId, args);
+    MLModel model = trainer.train(toGrillConf(conf),
+      database, table, modelId, args);
 
     LOG.info("Done training model: " + modelId);
 
@@ -199,7 +198,7 @@ public class GrillML {
       try {
         Class<? extends MLDriver> mlDriverClass = (Class<? extends MLDriver>) cls;
         MLDriver driver = mlDriverClass.newInstance();
-        driver.init(hiveConf);
+        driver.init(toGrillConf(conf));
         drivers.add(driver);
         LOG.info("Added driver " + driverClass);
       } catch (Exception e) {
@@ -249,6 +248,11 @@ public class GrillML {
 
   public String getModelPath(String algorithm, String modelID) {
     return ModelLoader.getModelLocation(conf, algorithm, modelID).toString();
+  }
+
+  @Override
+  public MLTestReport testModel(GrillSessionHandle session, String table, String algorithm, String modelID) throws GrillException {
+    return null;
   }
 
   /**
@@ -405,8 +409,14 @@ public class GrillML {
     }
   }
 
-  public Map<String, String> getAlgoParamDescription(String algorithm) throws GrillException {
-    MLTrainer trainer = getTrainerForName(algorithm);
+  public Map<String, String> getAlgoParamDescription(String algorithm) {
+    MLTrainer trainer = null;
+    try {
+      trainer = getTrainerForName(algorithm);
+    } catch (GrillException e) {
+      LOG.error("Error getting algo description : " + algorithm, e);
+      return null;
+    }
     if (trainer instanceof BaseSparkTrainer) {
       return ((BaseSparkTrainer) trainer).getArgUsage();
     }
@@ -477,5 +487,9 @@ public class GrillML {
 
       return ctx.getQueryHandle();
     }
+  }
+
+  private GrillConf toGrillConf(HiveConf conf) {
+    return null;
   }
 }

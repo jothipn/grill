@@ -6,13 +6,10 @@ import com.inmobi.grill.api.GrillSessionHandle;
 import com.inmobi.grill.api.query.GrillQuery;
 import com.inmobi.grill.api.query.QueryHandle;
 import com.inmobi.grill.api.query.QueryStatus;
-import com.inmobi.grill.ml.GrillML;
-import com.inmobi.grill.ml.ModelLoader;
-import com.inmobi.grill.ml.TestQueryRunner;
+import com.inmobi.grill.ml.*;
 import com.inmobi.grill.server.GrillService;
 import com.inmobi.grill.server.GrillServices;
 import com.inmobi.grill.server.api.GrillConfConstants;
-import com.inmobi.grill.server.api.ml.*;
 import com.inmobi.grill.server.api.query.QueryExecutionService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -22,8 +19,8 @@ import org.apache.hive.service.cli.CLIService;
 import java.util.*;
 
 public class MLServiceImpl extends GrillService implements MLService {
-  public static final Log LOG = LogFactory.getLog(GrillML.class);
-  private GrillML mlHandler;
+  public static final Log LOG = LogFactory.getLog(GrillMLImpl.class);
+  private GrillMLImpl ml;
 
   public MLServiceImpl(String name, CLIService cliService) {
     super(NAME, cliService);
@@ -35,47 +32,47 @@ public class MLServiceImpl extends GrillService implements MLService {
 
   @Override
   public List<String> getAlgorithms() {
-    return mlHandler.getAlgorithms();
+    return ml.getAlgorithms();
   }
 
   @Override
   public MLTrainer getTrainerForName(String algorithm) throws GrillException {
-    return mlHandler.getTrainerForName(algorithm);
+    return ml.getTrainerForName(algorithm);
   }
 
   @Override
   public String train(String table, String algorithm, String[] args) throws GrillException {
-    return mlHandler.train(table, algorithm, args);
+    return ml.train(table, algorithm, args);
   }
 
   @Override
   public List<String> getModels(String algorithm) throws GrillException {
-    return mlHandler.getModels(algorithm);
+    return ml.getModels(algorithm);
   }
 
   @Override
   public MLModel getModel(String algorithm, String modelId) throws GrillException {
-    return mlHandler.getModel(algorithm, modelId);
+    return ml.getModel(algorithm, modelId);
   }
 
   @Override
   public synchronized void init(HiveConf hiveConf) {
-    mlHandler = new GrillML(hiveConf);
-    mlHandler.init(hiveConf);
+    ml = new GrillMLImpl(hiveConf);
+    ml.init(hiveConf);
     super.init(hiveConf);
     LOG.info("Inited ML service");
   }
 
   @Override
   public synchronized void start() {
-    mlHandler.start();
+    ml.start();
     super.start();
     LOG.info("Started ML service");
   }
 
   @Override
   public synchronized void stop() {
-    mlHandler.stop();
+    ml.stop();
     super.stop();
     LOG.info("Stopped ML service");
   }
@@ -86,7 +83,7 @@ public class MLServiceImpl extends GrillService implements MLService {
 
   @Override
   public String getModelPath(String algorithm, String modelID) {
-    return mlHandler.getModelPath(algorithm, modelID);
+    return ml.getModelPath(algorithm, modelID);
   }
 
   @Override
@@ -95,32 +92,32 @@ public class MLServiceImpl extends GrillService implements MLService {
                                 String algorithm,
                                 String modelID) throws GrillException {
 
-    return mlHandler.testModel(sessionHandle, table, algorithm, modelID, new DirectQueryRunner(sessionHandle));
+    return ml.testModel(sessionHandle, table, algorithm, modelID, new DirectQueryRunner(sessionHandle));
   }
 
   @Override
   public List<String> getTestReports(String algorithm) throws GrillException {
-    return mlHandler.getTestReports(algorithm);
+    return ml.getTestReports(algorithm);
   }
 
   @Override
   public MLTestReport getTestReport(String algorithm, String reportID) throws GrillException {
-    return mlHandler.getTestReport(algorithm, reportID);
+    return ml.getTestReport(algorithm, reportID);
   }
 
   @Override
   public Object predict(String algorithm, String modelID, Object[] features) throws GrillException {
-    return mlHandler.predict(algorithm, modelID, features);
+    return ml.predict(algorithm, modelID, features);
   }
 
   @Override
   public void deleteModel(String algorithm, String modelID) throws GrillException {
-    mlHandler.deleteModel(algorithm, modelID);
+    ml.deleteModel(algorithm, modelID);
   }
 
   @Override
   public void deleteTestReport(String algorithm, String reportID) throws GrillException {
-    mlHandler.deleteTestReport(algorithm, reportID);
+    ml.deleteTestReport(algorithm, reportID);
   }
 
   /**
@@ -170,10 +167,6 @@ public class MLServiceImpl extends GrillService implements MLService {
 
   @Override
   public Map<String, String> getAlgoParamDescription(String algorithm) {
-    try {
-      return mlHandler.getAlgoParamDescription(algorithm);
-    } catch (GrillException e) {
-      return null;
-    }
+    return ml.getAlgoParamDescription(algorithm);
   }
 }

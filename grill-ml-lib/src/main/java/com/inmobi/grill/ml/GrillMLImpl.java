@@ -490,6 +490,8 @@ public class GrillMLImpl implements GrillML {
   }
 
   private GrillConf toGrillConf(HiveConf conf) {
-    return null;
+    GrillConf grillConf = new GrillConf();
+    grillConf.getProperties().putAll(conf.getValByRegex(".*"));
+    return grillConf;
   }
 }

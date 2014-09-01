@@ -93,7 +93,11 @@ public abstract class BaseSparkTrainer implements MLTrainer {
   }
 
   protected HiveConf toHiveConf(GrillConf conf) {
-    return null;
+    HiveConf hiveConf = new HiveConf();
+    for (String key : conf.getProperties().keySet()) {
+      hiveConf.set(key, conf.getProperties().get(key));
+    }
+    return hiveConf;
   }
 
   public void parseParams(String[] args) {

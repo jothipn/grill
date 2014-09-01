@@ -3,13 +3,12 @@ package com.inmobi.grill.ml.spark;
 import com.inmobi.grill.api.GrillConf;
 import com.inmobi.grill.api.GrillException;
 import com.inmobi.grill.ml.Algorithms;
-import com.inmobi.grill.ml.spark.trainers.*;
 import com.inmobi.grill.ml.MLDriver;
 import com.inmobi.grill.ml.MLTrainer;
+import com.inmobi.grill.ml.spark.trainers.*;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 
@@ -17,7 +16,6 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 
 public class SparkMLDriver implements MLDriver {

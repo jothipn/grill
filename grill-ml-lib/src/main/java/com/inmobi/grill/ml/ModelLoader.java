@@ -43,9 +43,9 @@ public class ModelLoader {
   }
 
   public static MLModel loadModel(Configuration conf, String algorithm, String modelID) throws IOException {
-    LOG.info("Loading model algorithm: " + algorithm + " modelID: " + modelID);
-
     final Path modelPath = getModelLocation(conf, algorithm, modelID);
+    LOG.info("Loading model for algorithm: " + algorithm + " modelID: " + modelID
+      + " At path: " + modelPath.toUri().toString());
     try {
       return modelCache.get(modelPath, new Callable<MLModel>() {
         @Override

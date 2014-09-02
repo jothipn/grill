@@ -265,8 +265,8 @@ public class MLServiceResource {
 
     TestReport result = new TestReport(
       report.getTestTable(),
-      report.getTestOutputPath(),
-      report.getPredictionResultColumn(),
+      report.getOutputTable(),
+      report.getOutputColumn(),
       report.getLabelColumn(),
       StringUtils.join(report.getFeatureColumns(), ","),
       report.getAlgorithm(),

@@ -83,6 +83,6 @@ public class HiveMLUDF extends GenericUDF {
     conf = context.getJobConf();
     soi = PrimitiveObjectInspectorFactory.javaStringObjectInspector;
     doi = LazyPrimitiveObjectInspectorFactory.LAZY_DOUBLE_OBJECT_INSPECTOR;
-    LOG.info(UDF_NAME + " configured");
+    LOG.info(UDF_NAME + " configured. Model base dir path: " + conf.get(ModelLoader.MODEL_PATH_BASE_DIR));
   }
 }

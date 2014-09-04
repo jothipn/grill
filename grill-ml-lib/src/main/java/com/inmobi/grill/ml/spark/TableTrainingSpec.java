@@ -2,6 +2,7 @@ package com.inmobi.grill.ml.spark;
 
 import com.google.common.base.Preconditions;
 import com.inmobi.grill.api.GrillException;
+import lombok.Getter;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -27,20 +28,38 @@ import java.util.List;
 
 public class TableTrainingSpec implements Serializable {
   public static final Log LOG = LogFactory.getLog(TableTrainingSpec.class);
+
+  @Getter
   private transient RDD<LabeledPoint> trainingRDD;
+
+  @Getter
   private transient RDD<LabeledPoint> testingRDD;
-  private String db;
+
+  @Getter
+  private String database;
+
+  @Getter
   private String table;
+
+  @Getter
   private String partitionFilter;
+
+  @Getter
   private List<String> featureColumns;
+
+  @Getter
   private String labelColumn;
+
+  @Getter
   transient private HiveConf conf;
+
   // By default all samples are considered for training
   private boolean splitTraining;
   private double trainingFraction = 1.0;
   int labelPos;
   int[] featurePositions;
   int numFeatures;
+
   transient JavaRDD<LabeledPoint> labeledRDD;
 
   public static TableTrainingSpecBuilder newBuilder() {
@@ -61,7 +80,7 @@ public class TableTrainingSpec implements Serializable {
     }
 
     public TableTrainingSpecBuilder database(String db) {
-      spec.db = db;
+      spec.database = db;
       return this;
     }
 
@@ -146,7 +165,7 @@ public class TableTrainingSpec implements Serializable {
     List<FieldSchema> columns;
     try {
       Hive metastoreClient = Hive.get(conf);
-      Table tbl = (db == null) ? metastoreClient.getTable(table) : metastoreClient.getTable(db, table);
+      Table tbl = (database == null) ? metastoreClient.getTable(table) : metastoreClient.getTable(database, table);
       columns = tbl.getAllCols();
     } catch (HiveException exc) {
       LOG.error("Error getting table info " + toString(), exc);
@@ -208,7 +227,7 @@ public class TableTrainingSpec implements Serializable {
     // Get the RDD for table
     JavaPairRDD<WritableComparable, HCatRecord> tableRDD;
     try {
-      tableRDD = HiveTableRDD.createHiveTableRDD(sparkContext, conf, db, table, partitionFilter);
+      tableRDD = HiveTableRDD.createHiveTableRDD(sparkContext, conf, database, table, partitionFilter);
     } catch (IOException e) {
       throw new GrillException(e);
     }
@@ -227,7 +246,7 @@ public class TableTrainingSpec implements Serializable {
 
     if (splitTraining) {
       // We have to split the RDD between a training RDD and a testing RDD
-      LOG.info("Splitting RDD for table " + db + "." + table + " with split fraction " + trainingFraction);
+      LOG.info("Splitting RDD for table " + database + "." + table + " with split fraction " + trainingFraction);
       JavaRDD<DataSample> sampledRDD = labeledRDD.map(new Function<LabeledPoint, DataSample>() {
         @Override
         public DataSample call(LabeledPoint v1) throws Exception {
@@ -244,56 +263,8 @@ public class TableTrainingSpec implements Serializable {
     LOG.info("Generated RDDs");
   }
 
-  public RDD<LabeledPoint> getTrainingRDD() {
-    return trainingRDD;
-  }
-
-  public RDD<LabeledPoint> getTestingRDD() {
-    return testingRDD;
-  }
-
-  public String getDb() {
-    return db;
-  }
-
-  public String getTable() {
-    return table;
-  }
-
-  public String getPartitionFilter() {
-    return partitionFilter;
-  }
-
-  public List<String> getFeatureColumns() {
-    return featureColumns;
-  }
-
-  public String getLabelColumn() {
-    return labelColumn;
-  }
-
-  public HiveConf getConf() {
-    return conf;
-  }
-
-  public double getTrainingFraction() {
-    return trainingFraction;
-  }
-
-  public int getLabelPos() {
-    return labelPos;
-  }
-
-  public int[] getFeaturePositions() {
-    return featurePositions;
-  }
-
-  public int getNumFeatures() {
-    return numFeatures;
-  }
-
   @Override
   public String toString() {
-    return StringUtils.join(new String[]{db, table, partitionFilter, labelColumn}, ",");
+    return StringUtils.join(new String[]{database, table, partitionFilter, labelColumn}, ",");
   }
 }

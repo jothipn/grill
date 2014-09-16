@@ -5,6 +5,7 @@ import com.inmobi.grill.api.ml.ModelMetadata;
 import com.inmobi.grill.api.ml.TestReport;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
@@ -20,12 +21,12 @@ import java.util.Map;
 /*
  * Client code to invoke server side ML API
  */
-public class GrillMLClient {
-  public static final Log LOG = LogFactory.getLog(GrillMLClient.class);
+public class GrillMLJerseyClient {
+  public static final Log LOG = LogFactory.getLog(GrillMLJerseyClient.class);
 
   private final GrillConnection connection;
 
-  public GrillMLClient(GrillConnection connection) {
+  public GrillMLJerseyClient(GrillConnection connection) {
     this.connection = connection;
   }
 
@@ -41,7 +42,7 @@ public class GrillMLClient {
   }
 
 
-  ModelMetadata getModelMetadata(String algorithm, String modelID) {
+  public ModelMetadata getModelMetadata(String algorithm, String modelID) {
     try {
       return getMLWebTarget()
         .path("models")
@@ -51,7 +52,7 @@ public class GrillMLClient {
     }
   }
 
-  void deleteModel(String algorithm, String modelID) {
+  public void deleteModel(String algorithm, String modelID) {
     getMLWebTarget()
       .path("models")
       .path(algorithm)
@@ -59,7 +60,7 @@ public class GrillMLClient {
       .request().delete();
   }
 
-  List<String> getModelsForAlgorithm(String algorithm) {
+  public List<String> getModelsForAlgorithm(String algorithm) {
     try {
       StringList models = getMLWebTarget()
         .path("models")
@@ -71,13 +72,13 @@ public class GrillMLClient {
     }
   }
 
-  List<String> getTrainerNames() {
+  public List<String> getTrainerNames() {
     StringList trainerNames = getMLWebTarget()
       .path("trainers").request().get(StringList.class);
     return trainerNames == null ? null : trainerNames.getElements();
   }
 
-  String trainModel(String algorithm, Map<String, String> params) {
+  public String trainModel(String algorithm, Map<String, String> params) {
     Form form = new Form();
 
     for (Map.Entry<String, String> entry : params.entrySet()) {
@@ -91,7 +92,7 @@ public class GrillMLClient {
       .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE), String.class);
   }
 
-  String testModel(String table, String algorithm, String modelID) {
+  public String testModel(String table, String algorithm, String modelID) {
     WebTarget modelTestTarget = getMLWebTarget()
       .path("test")
       .path(table)
@@ -106,7 +107,7 @@ public class GrillMLClient {
       .post(Entity.entity(mp, MediaType.MULTIPART_FORM_DATA_TYPE), String.class);
   }
 
-  List<String> getTestReportsOfAlgorithm(String algorithm) {
+  public List<String> getTestReportsOfAlgorithm(String algorithm) {
     try {
       StringList list = getMLWebTarget()
         .path("reports")
@@ -119,7 +120,7 @@ public class GrillMLClient {
     }
   }
 
-  TestReport getTestReport(String algorithm, String reportID) {
+  public TestReport getTestReport(String algorithm, String reportID) {
     try {
       return getMLWebTarget()
         .path("reports")
@@ -132,7 +133,7 @@ public class GrillMLClient {
     }
   }
 
-  String deleteTestReport(String algorithm, String reportID) {
+  public String deleteTestReport(String algorithm, String reportID) {
     return getMLWebTarget()
       .path("reports")
       .path(algorithm)
@@ -140,7 +141,7 @@ public class GrillMLClient {
       .request().delete(String.class);
   }
 
-  String predictSingle(String algorithm, String modelID, Map<String,String> features) {
+  public String predictSingle(String algorithm, String modelID, Map<String,String> features) {
     WebTarget target = getMLWebTarget()
       .path("predict")
       .path(algorithm)
@@ -153,7 +154,7 @@ public class GrillMLClient {
     return target.request().get(String.class);
   }
 
-  List<String> getParamDescriptionOfTrainer(String algorithm) {
+  public List<String> getParamDescriptionOfTrainer(String algorithm) {
     try {
       StringList paramHelp = getMLWebTarget()
         .path("trainers")
@@ -164,5 +165,9 @@ public class GrillMLClient {
     } catch (NotFoundException exc) {
       return null;
     }
+  }
+
+  public Configuration getConf() {
+    return connection.getGrillConnectionParams().getConf();
   }
 }

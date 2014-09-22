@@ -1,0 +1,56 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    attributeFormDefault="unqualified"
+    elementFormDefault="qualified"
+    targetNamespace="uri:grill:usermetastaore:0.1"
+    xmlns="uri:grill:usermetastaore:0.1"
+    xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" jaxb:version="2.1"
+    xmlns:cube="uri:grill:cube:0.1">
+    <xs:annotation>
+        <xs:appinfo>
+            <jaxb:schemaBindings>
+            <jaxb:package name="com.inmobi.grill.api.usermetastore"/>
+            </jaxb:schemaBindings>
+        </xs:appinfo>
+    </xs:annotation>
+
+    <xs:import namespace="uri:grill:cube:0.1" schemaLocation="cube-0.1.xsd"/>
+
+    <xs:element name="domain" type="x_domain"> </xs:element>
+
+    <xs:complexType name="x_domain">
+        <xs:annotation>
+            <xs:documentation>
+            XDomain is the abstraction that users use to provide the specification of any new domain and its properties. 
+            </xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="schema" type="x_schema"/>
+            <xs:element name="class" type="x_domain_class"/>
+        </xs:sequence>
+        <xs:attribute type="xs:string" name="name" use="required"/>
+        <xs:attribute type="xs:string" name="description" />
+        <xs:attribute type="xs:string" name="owner" />
+    </xs:complexType>
+
+    <xs:element name="x_schema" type="x_schema">
+    </xs:element>
+
+    <xs:complexType name="x_schema">
+        <xs:sequence>
+            <xs:element type="cube:x_dim_attributes" name="attributes"/>
+        </xs:sequence>
+        <xs:attribute type="xs:string" name="name" use="required"/>
+    </xs:complexType>
+
+    <xs:element name="x_domain_class" type="x_domain_class">
+    </xs:element>
+
+    <xs:simpleType name="x_domain_class">
+        <xs:restriction base="xs:string">
+        <xs:enumeration value="Default"/>
+        <xs:enumeration value="Social"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+</xs:schema>
+

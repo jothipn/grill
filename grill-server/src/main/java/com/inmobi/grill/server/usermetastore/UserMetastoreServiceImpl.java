@@ -27,6 +27,7 @@ import com.inmobi.grill.server.GrillService;
 import com.inmobi.grill.server.api.usermetastore.UserMetastoreService;
 import com.inmobi.grill.server.session.GrillSessionImpl;
 import org.apache.hadoop.hive.ql.cube.metadata.CubeMetastoreClient;
+import org.apache.hadoop.hive.ql.cube.metadata.Dimension;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.parse.ParseException;
 import org.apache.hive.service.cli.CLIService;
@@ -107,5 +108,10 @@ public class UserMetastoreServiceImpl extends GrillService implements UserMetast
       release(sessionid);
     }
     return null;
+  }
+
+  //TODO Added for test case purpose. Need to refactor
+  Dimension getDimensionFromXDomain(GrillSessionHandle sessionid, XDomain domain) throws GrillException {
+    return getClient(sessionid).getDimensionFromXDomain(domain);
   }
 }

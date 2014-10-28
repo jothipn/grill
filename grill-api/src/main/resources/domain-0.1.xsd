@@ -1,10 +1,11 @@
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
     attributeFormDefault="unqualified"
     elementFormDefault="qualified"
-    targetNamespace="uri:grill:usermetastaore:0.1"
-    xmlns="uri:grill:usermetastaore:0.1"
+    targetNamespace="uri:grill:usermetastore:domain:0.1"
+    xmlns="uri:grill:usermetastore:domain:0.1"
     xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" jaxb:version="2.1"
-    xmlns:cube="uri:grill:cube:0.1">
+    xmlns:cube="uri:grill:cube:0.1"
+    xmlns:source="uri:grill:usermetastore:source:0.1">
     <xs:annotation>
         <xs:appinfo>
             <jaxb:schemaBindings>
@@ -14,6 +15,7 @@
     </xs:annotation>
 
     <xs:import namespace="uri:grill:cube:0.1" schemaLocation="cube-0.1.xsd"/>
+    <xs:import namespace="uri:grill:usermetastore:source:0.1" schemaLocation="source-0.1.xsd"/>
 
     <xs:element name="domain" type="x_domain"> </xs:element>
 
@@ -26,10 +28,12 @@
         <xs:sequence>
             <xs:element name="schema" type="x_schema"/>
             <xs:element name="class" type="x_domain_class"/>
+
         </xs:sequence>
         <xs:attribute type="xs:string" name="name" use="required"/>
         <xs:attribute type="xs:string" name="description" />
         <xs:attribute type="xs:string" name="owner" />
+        <xs:attribute type="xs:string" name="primary_key" />
     </xs:complexType>
 
     <xs:element name="x_schema" type="x_schema">
@@ -38,8 +42,8 @@
     <xs:complexType name="x_schema">
         <xs:sequence>
             <xs:element type="cube:x_dim_attributes" name="attributes"/>
+            <xs:element name="source" type="source:source"/>
         </xs:sequence>
-        <xs:attribute type="xs:string" name="name" use="required"/>
     </xs:complexType>
 
     <xs:element name="x_domain_class" type="x_domain_class">
@@ -47,8 +51,9 @@
 
     <xs:simpleType name="x_domain_class">
         <xs:restriction base="xs:string">
-        <xs:enumeration value="Default"/>
-        <xs:enumeration value="Social"/>
+        <xs:enumeration value="User"/>
+        <xs:enumeration value="Other"/>
+        <xs:enumeration value="Activity"/>
         </xs:restriction>
     </xs:simpleType>
 

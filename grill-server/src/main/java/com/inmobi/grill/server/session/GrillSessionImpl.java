@@ -20,17 +20,10 @@ package com.inmobi.grill.server.session;
  * #L%
  */
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.*;
-
-import javax.ws.rs.NotFoundException;
-
+import com.inmobi.grill.api.GrillException;
 import com.inmobi.grill.api.GrillSessionHandle;
 import com.inmobi.grill.server.api.GrillConfConstants;
-
+import com.inmobi.grill.server.usermetastore.UserMetastoreClient;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -42,11 +35,17 @@ import org.apache.hive.service.cli.SessionHandle;
 import org.apache.hive.service.cli.session.HiveSessionImpl;
 import org.apache.hive.service.cli.thrift.TProtocolVersion;
 
-import com.inmobi.grill.api.GrillException;
+import javax.ws.rs.NotFoundException;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.*;
 
 public class GrillSessionImpl extends HiveSessionImpl {
   public static final Log LOG = LogFactory.getLog(GrillSessionImpl.class);
   private CubeMetastoreClient cubeClient;
+  private UserMetastoreClient userClient;
   private GrillSessionPersistInfo persistInfo = new GrillSessionPersistInfo();
   private long lastAccessTime = System.currentTimeMillis();
   private long sessionTimeout;
@@ -112,6 +111,17 @@ public class GrillSessionImpl extends HiveSessionImpl {
       }
     }
     return cubeClient;
+  }
+
+  public UserMetastoreClient getUserMetastoreClient() throws GrillException {
+    if (userClient == null) {
+      try {
+         userClient = UserMetastoreClient.getInstance(getHiveConf());
+      } catch (HiveException e) {
+           throw new GrillException(e);
+      }
+    }
+    return userClient;
   }
 
   public synchronized void acquire() {

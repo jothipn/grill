@@ -1,0 +1,25 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    attributeFormDefault="unqualified"
+    elementFormDefault="qualified"
+    targetNamespace="uri:grill:usermetastore:source:0.1"
+    xmlns="uri:grill:usermetastore:source:0.1"
+    xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" jaxb:version="2.1">
+
+    <xs:annotation>
+        <xs:appinfo>
+            <jaxb:schemaBindings>
+            <jaxb:package name="com.inmobi.grill.api.usermetastore"/>
+            </jaxb:schemaBindings>
+        </xs:appinfo>
+    </xs:annotation>
+
+    <xs:element name="source" type="source">
+    </xs:element>
+
+    <xs:complexType name="source">
+        <xs:attribute type="xs:string" name="name" use="required"/>
+        <xs:attribute type="xs:string" name="description" />
+        <xs:attribute type="xs:string" name="license" />
+    </xs:complexType>
+</xs:schema>
+

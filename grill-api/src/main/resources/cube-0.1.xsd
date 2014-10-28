@@ -157,6 +157,8 @@
         <xs:attribute type="xs:dateTime" name="end_time" />
         <xs:attribute type="xs:double" name="cost" />
         <xs:attribute type="xs:string" name="expr" />        
+        <xs:attribute type="xs:boolean" name="nullable" />        
+        <xs:attribute type="xs:string" name="constraints" />        
     </xs:complexType>
     <xs:complexType name="x_tablereference">
         <xs:attribute type="xs:string" name="dest_table" use="required"/>
@@ -398,6 +400,5 @@
         <xs:attribute name="createtime" type="xs:int" use="required" />
         <xs:attribute name="lastAccessTime" type="xs:int" use="required" />
     </xs:complexType>
-
 </xs:schema>
            

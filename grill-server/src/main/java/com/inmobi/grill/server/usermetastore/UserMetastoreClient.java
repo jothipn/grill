@@ -21,17 +21,16 @@ package com.inmobi.grill.server.usermetastore;
  *
 */
 
-import com.inmobi.grill.api.metastore.XDimAttribute;
-import com.inmobi.grill.api.metastore.XDimAttributes;
+import com.inmobi.grill.api.metastore.*;
 import com.inmobi.grill.api.usermetastore.ObjectFactory;
 import com.inmobi.grill.api.usermetastore.XDomain;
 import com.inmobi.grill.api.usermetastore.XDomainClass;
 import com.inmobi.grill.api.usermetastore.XSchema;
 import com.inmobi.grill.server.metastore.JAXBUtils;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.ql.cube.metadata.CubeDimAttribute;
-import org.apache.hadoop.hive.ql.cube.metadata.CubeMetastoreClient;
-import org.apache.hadoop.hive.ql.cube.metadata.Dimension;
+import org.apache.hadoop.hive.metastore.api.FieldSchema;
+import org.apache.hadoop.hive.ql.cube.metadata.*;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.parse.ParseException;
 import org.apache.log4j.LogManager;
@@ -55,13 +54,22 @@ public class UserMetastoreClient {
   private static final String DESCRIPTION = "description";
   private static final String DOMAIN_CLASS = "domain_class";
 
-  private final HiveConf config;
+  private static final String DEFAULT_INPUT_FORMAT = "org.apache.hadoop.hive.ql.io.orc.OrcInputFormat";
+  private static final String DEFAULT_OUTPUT_FORMAT = "org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat";
+  private static final String DEFAULT_FIELD_DELIMITER = " '\\001'";
+//  private static final String DEFAULT_FIELD_ESCAPER = ;
+//  private static final String DEFAULT_COL_ITEM_DELIMITER;
+//  private static final String DEFAULT_LINE_DELIMITER;
+//  private static final String DEFAULT_MAP_KEY_DELIMITER;
+//TODO Take all these from a conf
+  private static final String DEFAULT_SERIALIZER = "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe" ;
+  private static final String BASELOCATION = "/tmp/baselocation";
+  private static final String DOMAIN = "domain";
 
   private static UserMetastoreClient instance;
   private final CubeMetastoreClient cubeClient;
 
   private UserMetastoreClient(HiveConf conf) throws HiveException {
-    this.config = conf;
     this.cubeClient = CubeMetastoreClient.getInstance(conf);
   }
 
@@ -81,10 +89,104 @@ public class UserMetastoreClient {
   public void createDomain(XDomain domain) throws ParseException, HiveException {
     System.out.println("Inside client, CD");
     cubeClient.createDimension(getDimensionFromXDomain(domain));
+
+    //We will also create the underlying dimensionTable and its storage
+    double weight = 0.0; //TODO. What is weight?
+
+    List<FieldSchema> columns = getColumnsForDomain(domain);
+    Map<String, UpdatePeriod> updateTimePeriodMap = getUpdatePeriodMapForDomain(domain);
+    Map<String, StorageTableDesc> storageDesc = getStorageDescForDomain(domain);
+    Map<String, String> dimensionProperties = getPropertiesForDomain(domain);
+
+    cubeClient.createCubeDimensionTable(domain.getName(), domain.getName() + "_cube",
+        columns, weight, updateTimePeriodMap, dimensionProperties, storageDesc);
   }
 
+  private Map<String, String> getPropertiesForDomain(XDomain domain) {
+    return null;
+  }
 
-  private Dimension getDimensionFromXDomain(XDomain domain) {
+  private Map<String, StorageTableDesc> getStorageDescForDomain(XDomain domain) throws HiveException {
+    String defaultDomainStorageName = "domain_storage_" + domain.getName();
+    createDomainStorage(defaultDomainStorageName);
+    Map<String, StorageTableDesc> storageTableMap = new HashMap<String, StorageTableDesc>();
+    StorageTableDesc std = createStorageTableDesc(domain);
+    storageTableMap.put(defaultDomainStorageName, std);
+    return storageTableMap;
+  }
+
+  private void createDomainStorage(String name) throws HiveException {
+    List<Storage> allStorage = cubeClient.getAllStorages();
+    for (Storage s: allStorage) {
+      if (s.getName().equalsIgnoreCase(name)) {
+        return;
+      }
+    }
+
+    //TODO. Get all this from config
+    XStorage localStorage = CubeXCF.createXStorage();
+    XProperties xprops = CubeXCF.createXProperties();
+    XProperty xprop = CubeXCF.createXProperty();
+    xprop.setName("storage.url");
+    xprop.setValue("file:///");
+    xprops.getProperties().add(xprop);
+    localStorage.setClassname("org.apache.hadoop.hive.ql.cube.metadata.HDFSStorage");
+    localStorage.setName(name);
+    localStorage.setProperties(xprops);
+    cubeClient.createStorage(JAXBUtils.storageFromXStorage(localStorage));
+  }
+
+  private StorageTableDesc createStorageTableDesc(XDomain domain) {
+    StorageTableDesc tableDesc = new StorageTableDesc();
+    tableDesc.setTblProps(null);
+    tableDesc.setSerdeProps(null);
+
+    XDomainClass domainClass = domain.getClazz();
+
+    if (domainClass == XDomainClass.USER) {
+      String source = domain.getSource().getName();
+      for (XDimAttribute xd : domain.getSchema().getAttributes().getDimAttributes()) {
+        if (xd.getName().equalsIgnoreCase(source)) {
+          FieldSchema fs = new FieldSchema(xd.getName(), xd.getType(), xd.getDescription());
+          ArrayList<FieldSchema> afs = new ArrayList<FieldSchema>();
+          afs.add(fs);
+          tableDesc.setPartCols(afs);
+        }
+       }
+    }
+
+    tableDesc.setExternal(true);
+    tableDesc.setLocation(generateTableLocationForDomain(domain));
+    tableDesc.setInputFormat(DEFAULT_INPUT_FORMAT);
+    tableDesc.setOutputFormat(DEFAULT_OUTPUT_FORMAT);
+    tableDesc.setFieldDelim(DEFAULT_FIELD_DELIMITER);
+    tableDesc.setSerName(DEFAULT_SERIALIZER);
+    return tableDesc;
+  }
+
+  private String generateTableLocationForDomain(XDomain domain) {
+    Path path = new Path(BASELOCATION, DOMAIN + "_" + domain.getName());
+    return path.toString();
+  }
+
+  private Map<String, UpdatePeriod> getUpdatePeriodMapForDomain(XDomain domain) {
+    Map<String, UpdatePeriod> map = new LinkedHashMap<String, UpdatePeriod>();
+    UpdatePeriod dumpPeriod = null;
+    //TODO. We need to create one common storage for all our needs
+    map.put("domain_storage_" + domain.getName(), dumpPeriod);
+    return map;
+  }
+
+  private List<FieldSchema>
+  getColumnsForDomain(XDomain domain) {
+    List<FieldSchema> lfs = new ArrayList<FieldSchema>();
+    for (XDimAttribute xd : domain.getSchema().getAttributes().getDimAttributes()) {
+      lfs.add(new FieldSchema(xd.getName(), xd.getType(), xd.getDescription()));
+    }
+    return lfs;
+  }
+
+   Dimension getDimensionFromXDomain(XDomain domain) {
     Set<CubeDimAttribute> dims = new LinkedHashSet<CubeDimAttribute>();
     for (XDimAttribute xd : domain.getSchema().getAttributes().getDimAttributes()) {
       System.out.println(xd.getName());

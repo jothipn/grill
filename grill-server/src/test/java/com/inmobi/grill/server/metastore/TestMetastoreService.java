@@ -20,41 +20,18 @@ package com.inmobi.grill.server.metastore;
  * #L%
  */
 
-import java.util.*;
-
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.client.*;
-import javax.ws.rs.core.*;
-import javax.xml.bind.JAXBElement;
-import javax.xml.datatype.DatatypeFactory;
-import javax.xml.datatype.XMLGregorianCalendar;
-
 import com.inmobi.grill.api.APIResult;
+import com.inmobi.grill.api.APIResult.Status;
 import com.inmobi.grill.api.GrillSessionHandle;
 import com.inmobi.grill.api.StringList;
-import com.inmobi.grill.api.APIResult.Status;
 import com.inmobi.grill.api.metastore.*;
 import com.inmobi.grill.server.GrillJerseyTest;
 import com.inmobi.grill.server.GrillServices;
 import com.inmobi.grill.server.GrillTestUtil;
-import com.inmobi.grill.server.metastore.CubeMetastoreServiceImpl;
-import com.inmobi.grill.server.metastore.JAXBUtils;
-import com.inmobi.grill.server.metastore.MetastoreApp;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
-import org.apache.hadoop.hive.ql.cube.metadata.AbstractCubeTable;
-import org.apache.hadoop.hive.ql.cube.metadata.Cube;
-import org.apache.hadoop.hive.ql.cube.metadata.CubeDimensionTable;
-import org.apache.hadoop.hive.ql.cube.metadata.CubeFactTable;
-import org.apache.hadoop.hive.ql.cube.metadata.CubeInterface;
-import org.apache.hadoop.hive.ql.cube.metadata.DerivedCube;
-import org.apache.hadoop.hive.ql.cube.metadata.Dimension;
-import org.apache.hadoop.hive.ql.cube.metadata.HDFSStorage;
-import org.apache.hadoop.hive.ql.cube.metadata.MetastoreConstants;
-import org.apache.hadoop.hive.ql.cube.metadata.UpdatePeriod;
+import org.apache.hadoop.hive.ql.cube.metadata.*;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.LogManager;
@@ -64,12 +41,25 @@ import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
-
-import static org.testng.Assert.*;
-
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
+
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Application;
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.xml.bind.JAXBElement;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
+import java.util.*;
+
+import static org.testng.Assert.*;
 
 @Test(groups="unit-test")
 public class TestMetastoreService extends GrillJerseyTest {
